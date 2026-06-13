@@ -47,12 +47,15 @@ body {
     grid-template-columns: repeat(3, 1fr);
     gap: 15px;
     margin-bottom: 30px;
+    width: 100%;
 }
 
 /* 4. The Cells (.col) */
 .col {
-    height: 100px;
-    width: 100px;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    max-width: 100px;
+    max-height: 100px;
     background: rgba(255, 255, 255, 0.05);
     border-radius: 15px;
     display: flex;
@@ -199,8 +202,8 @@ button:active {
     }
 
     .col {
-        height: 80px;
-        width: 80px;
+        max-width: 80px;
+        max-height: 80px;
         font-size: 3.5rem;
         border-radius: 10px;
     }
@@ -224,8 +227,8 @@ button:active {
 /* For small devices */
 @media (max-width: 350px) {
     .col {
-        height: 70px;
-        width: 70px;
+        max-width: 70px;
+        max-height: 70px;
         font-size: 3rem;
     }
 }
