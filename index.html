@@ -11,9 +11,17 @@
 <body>
     <h1 class="main-title">XOXO</h1>
 
-    <div id="lobby">
+    <!-- ====== NAME PROMPT ====== -->
+    <div id="namePrompt" class="hidden">
+        <h2>Enter Your Name</h2>
+        <input type="text" id="playerNameInput" placeholder="Your name" maxlength="14" />
+        <button class="btn" onclick="submitName()">Continue</button>
+    </div>
+
+    <!-- ====== LOBBY ====== -->
+    <div id="lobby" class="hidden">
         <h2>XoXo Online</h2>
-        <p>Create a new game or join your friend's room</p>
+        <p id="lobbyGreeting">Create a new game or join your friend's room</p>
 
         <button class="btn" onclick="createRoom()">Create Room</button>
 
@@ -23,8 +31,21 @@
         </div>
     </div>
 
+    <!-- ====== WAITING ROOM ====== -->
+    <div id="waitingRoom" class="hidden">
+        <div id="waitRoomCode"></div>
+        <h2>Waiting for opponent...</h2>
+        <div id="waitPlayers" class="players-status"></div>
+        <button class="btn btn-leave" onclick="leaveRoom()">Leave Room</button>
+    </div>
+
+    <!-- ====== GAME ====== -->
     <div id="game" class="hidden">
         <div id="roomCodeDisplay"></div>
+
+        <!-- Live player + online status bar -->
+        <div id="playersBar" class="players-status"></div>
+
         <div id="status"></div>
 
         <div class="container">
@@ -50,7 +71,13 @@
 
             </div>
 
-            <button class="btn" onclick="resetOnlineGame()">New Game</button>
+            <!-- Rematch status text -->
+            <div id="rematchInfo" class="rematch-info"></div>
+
+            <div class="controls">
+                <button class="btn" id="rematchBtn" onclick="requestRematch()">New Game</button>
+                <button class="btn btn-leave" onclick="leaveRoom()">Leave Room</button>
+            </div>
         </div>
     </div>
 

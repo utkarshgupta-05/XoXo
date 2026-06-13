@@ -1,7 +1,7 @@
 // ============ FIREBASE SETUP ============
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
-  getDatabase, ref, set, onValue, update, get
+  getDatabase, ref, set, onValue, update, get, remove, onDisconnect
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
 const firebaseConfig = {
@@ -18,14 +18,81 @@ const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
 let roomId = null;
-let mySymbol = null; // 'X' or 'O'
-let gameActive = true;
+let mySymbol = null;      // 'X' or 'O'
+let myName = null;
+let gameActive = false;
+let roomListener = null;
+let lastData = null;
+
+const INACTIVITY_MS = 1000 * 60 * 60; // 1 hour
 
 const WIN_PATTERNS = [
   [0,1,2],[3,4,5],[6,7,8],
   [0,3,6],[1,4,7],[2,5,8],
   [0,4,8],[2,4,6]
 ];
+
+// ============ SVG ASSETS ============
+
+// Hand-drawn wobbly heart doodle (red) for "X" player
+function heartSVG() {
+  return `
+  <svg class="mark-svg heart-doodle" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+    <path d="M50 86
+             C 18 64, 8 44, 14 30
+             C 18 18, 36 14, 50 30
+             C 64 14, 82 18, 86 30
+             C 92 44, 82 64, 50 86 Z"
+          fill="none" stroke="#ff2d55" stroke-width="7"
+          stroke-linecap="round" stroke-linejoin="round"
+          stroke-dasharray="2 0" />
+    <path d="M30 34 C 33 30, 40 30, 42 34"
+          fill="none" stroke="#ff2d55" stroke-width="3.5"
+          stroke-linecap="round" opacity="0.7"/>
+  </svg>`;
+}
+
+// Hand-drawn wobbly circle doodle (blue) for "O" player
+function circleSVG() {
+  return `
+  <svg class="mark-svg circle-doodle" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+    <path d="M52 18
+             C 78 16, 90 38, 84 58
+             C 78 80, 50 90, 28 82
+             C 8 74, 8 44, 22 28
+             C 32 18, 44 16, 56 18"
+          fill="none" stroke="#2d7dff" stroke-width="7"
+          stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>`;
+}
+
+// Bitmoji-style cartoon avatar. `online` toggles green/grey ring + face mood.
+function avatarSVG(online) {
+  const skin = "#f1c27d";
+  const ring = online ? "#22c55e" : "#9ca3af";
+  const hair = "#3a2a1a";
+  const shirt = online ? "#3a7bd5" : "#6b7280";
+  const mouth = online
+    ? `<path d="M40 62 Q50 72 60 62" fill="none" stroke="#7a3b2e" stroke-width="3" stroke-linecap="round"/>`
+    : `<path d="M40 66 Q50 60 60 66" fill="none" stroke="#7a3b2e" stroke-width="3" stroke-linecap="round"/>`;
+  return `
+  <svg class="avatar-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="50" cy="50" r="48" fill="#ffffff"/>
+    <circle cx="50" cy="50" r="48" fill="none" stroke="${ring}" stroke-width="5"/>
+    <!-- shoulders -->
+    <path d="M18 96 C20 76 34 70 50 70 C66 70 80 76 82 96 Z" fill="${shirt}"/>
+    <!-- neck -->
+    <rect x="44" y="58" width="12" height="14" rx="5" fill="${skin}"/>
+    <!-- head -->
+    <circle cx="50" cy="44" r="22" fill="${skin}"/>
+    <!-- hair -->
+    <path d="M28 42 C26 22 74 22 72 42 C72 34 64 28 50 28 C36 28 28 34 28 42 Z" fill="${hair}"/>
+    <!-- eyes -->
+    <circle cx="42" cy="44" r="3" fill="#2b2b2b"/>
+    <circle cx="58" cy="44" r="3" fill="#2b2b2b"/>
+    ${mouth}
+  </svg>`;
+}
 
 function generateRoomCode() {
   return Math.random().toString(36).substring(2, 8).toUpperCase();
@@ -42,8 +109,38 @@ function checkWinner(board) {
   return null;
 }
 
-// ============ ROOM CREATE / JOIN ============
+function show(id) { document.getElementById(id).classList.remove("hidden"); }
+function hide(id) { document.getElementById(id).classList.add("hidden"); }
+function hideAllScreens() {
+  ["namePrompt", "lobby", "waitingRoom", "game"].forEach(hide);
+}
 
+// ============ PERSISTENCE ============
+function saveSession() {
+  if (roomId && mySymbol && myName) {
+    localStorage.setItem("xoxo_session", JSON.stringify({ roomId, mySymbol, myName }));
+  }
+}
+function clearSession() { localStorage.removeItem("xoxo_session"); }
+function loadSession() {
+  try { return JSON.parse(localStorage.getItem("xoxo_session")); }
+  catch { return null; }
+}
+
+// ============ NAME PROMPT ============
+window.submitName = function () {
+  const input = document.getElementById("playerNameInput");
+  const name = input.value.trim();
+  if (!name) { alert("Please enter your name"); return; }
+  myName = name;
+  localStorage.setItem("xoxo_name", myName);
+  document.getElementById("lobbyGreeting").innerText =
+    "Hi " + myName + "! Create a new game or join your friend's room";
+  hideAllScreens();
+  show("lobby");
+};
+
+// ============ ROOM CREATE / JOIN ============
 window.createRoom = async function () {
   roomId = generateRoomCode();
   mySymbol = "X";
@@ -52,97 +149,249 @@ window.createRoom = async function () {
     board: Array(9).fill(""),
     turn: "X",
     players: { X: true, O: false },
-    winner: ""
+    names: { X: myName, O: "" },
+    online: { X: true, O: false },
+    rematch: { X: false, O: false },
+    started: false,
+    winner: "",
+    lastActivity: Date.now()
   });
 
-  startOnlineGame();
+  saveSession();
+  enterRoom();
 };
 
 window.joinRoom = async function () {
   const codeInput = document.getElementById("joinCodeInput");
   const code = codeInput.value.trim().toUpperCase();
-  if (!code) {
-    alert("Please enter a room code");
-    return;
-  }
+  if (!code) { alert("Please enter a room code"); return; }
 
   const snap = await get(ref(db, "rooms/" + code));
-  if (!snap.exists()) {
-    alert("Room not found! Check the code.");
-    return;
-  }
+  if (!snap.exists()) { alert("Room not found! Check the code."); return; }
 
   const data = snap.val();
-  if (data.players && data.players.O) {
-    alert("Room is full!");
-    return;
-  }
+  if (data.players && data.players.O) { alert("Room is full!"); return; }
 
   roomId = code;
   mySymbol = "O";
 
-  await update(ref(db, "rooms/" + roomId + "/players"), { O: true });
-  startOnlineGame();
+  await update(ref(db, "rooms/" + roomId), {
+    "players/O": true,
+    "names/O": myName,
+    "online/O": true,
+    "rematch/O": false,
+    lastActivity: Date.now()
+  });
+
+  saveSession();
+  enterRoom();
 };
 
-// ============ GAME RENDER / LOGIC ============
+// ============ ENTER / LISTEN ============
+function enterRoom() {
+  hideAllScreens();
 
-function startOnlineGame() {
-  document.getElementById("lobby").classList.add("hidden");
-  document.getElementById("game").classList.remove("hidden");
+  const onlineRef = ref(db, "rooms/" + roomId + "/online/" + mySymbol);
+  set(onlineRef, true);
+  onDisconnect(onlineRef).set(false);
 
-  document.getElementById("roomCodeDisplay").innerText =
-    "Room Code: " + roomId + "  |  You are: " + mySymbol;
+  if (roomListener) roomListener();
 
-  onValue(ref(db, "rooms/" + roomId), (snapshot) => {
+  roomListener = onValue(ref(db, "rooms/" + roomId), (snapshot) => {
     const data = snapshot.val();
-    if (!data) return;
-    renderOnlineBoard(data.board, data.turn, data.winner);
+    if (!data) {
+      alert("This room no longer exists.");
+      goToLobby();
+      return;
+    }
+    lastData = data;
+
+    if (data.lastActivity && (Date.now() - data.lastActivity > INACTIVITY_MS)) {
+      remove(ref(db, "rooms/" + roomId));
+      return;
+    }
+
+    if (!data.started) {
+      showWaitingRoom(data);
+    } else {
+      showGame(data);
+    }
   });
 }
 
-function renderOnlineBoard(board, turn, winner) {
+// ============ PLAYER STATUS BAR (avatars + online dot) ============
+function buildPlayerCard(symbol, data) {
+  const name = (data.names && data.names[symbol]) || (symbol === "X" ? "Player X" : "Player O");
+  const online = !!(data.online && data.online[symbol]);
+  const mark = symbol === "X" ? heartSVG() : circleSVG();
+  const youTag = symbol === mySymbol ? " (You)" : "";
+  return `
+    <div class="player-card ${online ? "is-online" : "is-offline"}">
+      <div class="avatar-wrap">
+        ${avatarSVG(online)}
+        <span class="status-dot ${online ? "dot-online" : "dot-offline"}"></span>
+      </div>
+      <div class="player-meta">
+        <div class="player-name">${escapeHtml(name)}${youTag}</div>
+        <div class="player-mark">${mark}<span>${online ? "Online" : "Offline"}</span></div>
+      </div>
+    </div>`;
+}
+
+function escapeHtml(str) {
+  return String(str).replace(/[&<>"']/g, c => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+  }[c]));
+}
+
+function renderStatusBar(elId, data) {
+  document.getElementById(elId).innerHTML =
+    buildPlayerCard("X", data) +
+    `<div class="vs-label">VS</div>` +
+    buildPlayerCard("O", data);
+}
+
+// ============ WAITING ROOM ============
+function showWaitingRoom(data) {
+  hideAllScreens();
+  show("waitingRoom");
+
+  document.getElementById("waitRoomCode").innerText =
+    "Room Code: " + roomId + "  |  You are: " + mySymbol;
+
+  renderStatusBar("waitPlayers", data);
+
+  if (data.players?.X && data.players?.O && !data.started) {
+    update(ref(db, "rooms/" + roomId), {
+      started: true,
+      lastActivity: Date.now()
+    });
+  }
+}
+
+// ============ GAME ============
+function showGame(data) {
+  hideAllScreens();
+  show("game");
+
+  document.getElementById("roomCodeDisplay").innerText =
+    "Room Code: " + roomId;
+
+  renderStatusBar("playersBar", data);
+  renderOnlineBoard(data.board, data.turn, data.winner, data.names);
+  renderRematch(data);
+}
+
+function renderOnlineBoard(board, turn, winner, names) {
   for (let i = 0; i < 9; i++) {
     const cell = document.getElementById(String(i));
     if (!cell) continue;
 
     const val = board[i];
-    cell.innerText = val || "";
     cell.classList.remove("X", "O");
-    if (val === "X") cell.classList.add("X");
-    if (val === "O") cell.classList.add("O");
+    if (val === "X") {
+      cell.innerHTML = heartSVG();
+      cell.classList.add("X");
+    } else if (val === "O") {
+      cell.innerHTML = circleSVG();
+      cell.classList.add("O");
+    } else {
+      cell.innerHTML = "";
+    }
   }
 
   const statusEl = document.getElementById("status");
+  const nameOf = (sym) => (names?.[sym]) || ("Player " + sym);
 
   if (winner === "draw") {
     statusEl.innerText = "It's a Draw! 🤝";
     gameActive = false;
   } else if (winner) {
-    statusEl.innerText = winner === mySymbol ? "You Won! 🎉" : "You Lost! " + winner + " wins.";
+    if (winner === mySymbol) {
+      statusEl.innerText = "🎉 You (" + nameOf(winner) + ") Won!";
+    } else {
+      statusEl.innerText = nameOf(winner) + " Won! 🏆";
+    }
     gameActive = false;
   } else if (turn === mySymbol) {
-    statusEl.innerText = "Your Turn (" + mySymbol + ")";
+    statusEl.innerText = "Your Turn, " + nameOf(mySymbol);
     gameActive = true;
   } else {
-    statusEl.innerText = "Waiting for opponent (" + turn + ")...";
+    statusEl.innerText = "Waiting for " + nameOf(turn) + "...";
     gameActive = true;
   }
 }
 
-// called from onclick="handleClick(this)" in HTML
+// ============ REMATCH FLOW ============
+function renderRematch(data) {
+  const info = document.getElementById("rematchInfo");
+  const btn = document.getElementById("rematchBtn");
+  const r = data.rematch || { X: false, O: false };
+  const gameOver = !!data.winner;
+
+  // Only allow rematch when the game has ended
+  btn.disabled = !gameOver;
+  btn.style.opacity = gameOver ? "1" : "0.5";
+  btn.style.cursor = gameOver ? "pointer" : "not-allowed";
+
+  if (!gameOver) {
+    info.innerText = "";
+    btn.innerText = "New Game";
+    return;
+  }
+
+  const mine = r[mySymbol];
+  const opp = mySymbol === "X" ? r.O : r.X;
+  const oppName = (data.names && (mySymbol === "X" ? data.names.O : data.names.X)) || "Opponent";
+
+  if (mine && opp) {
+    info.innerText = "Both agreed! Starting new game...";
+  } else if (mine && !opp) {
+    info.innerText = "Waiting for " + oppName + " to accept rematch...";
+    btn.innerText = "Cancel Rematch";
+  } else if (!mine && opp) {
+    info.innerText = oppName + " wants a rematch! Click New Game to accept.";
+    btn.innerText = "Accept Rematch";
+  } else {
+    info.innerText = "Game over. Want to play again?";
+    btn.innerText = "New Game";
+  }
+
+  // If both agreed, the X player resets the board (single writer avoids races)
+  if (mine && opp && mySymbol === "X") {
+    update(ref(db, "rooms/" + roomId), {
+      board: Array(9).fill(""),
+      turn: "X",
+      winner: "",
+      rematch: { X: false, O: false },
+      lastActivity: Date.now()
+    });
+  }
+}
+
+window.requestRematch = async function () {
+  if (!roomId || !lastData) return;
+  if (!lastData.winner) return; // only after game over
+
+  const current = !!(lastData.rematch && lastData.rematch[mySymbol]);
+  // Toggle my rematch vote (lets me cancel too)
+  await update(ref(db, "rooms/" + roomId + "/rematch"), {
+    [mySymbol]: !current
+  });
+  await update(ref(db, "rooms/" + roomId), { lastActivity: Date.now() });
+};
+
+// ============ GAME MOVE ============
 window.handleClick = async function (el) {
-  if (!roomId) return;
-  if (!gameActive) return;
+  if (!roomId || !gameActive) return;
 
   const index = Number(el.id);
 
   const snap = await get(ref(db, "rooms/" + roomId));
   const data = snap.val();
-  if (!data) return;
+  if (!data || !data.started) return;
 
   const { board, turn, winner } = data;
-
   if (winner) return;
   if (turn !== mySymbol) return;
   if (board[index] !== "") return;
@@ -156,17 +405,60 @@ window.handleClick = async function (el) {
   await update(ref(db, "rooms/" + roomId), {
     board: newBoard,
     turn: nextTurn,
-    winner: newWinner || ""
+    winner: newWinner || "",
+    lastActivity: Date.now()
   });
 };
 
-// called from onclick="resetOnlineGame()" in HTML
-window.resetOnlineGame = async function () {
-  if (!roomId) return;
-  gameActive = true;
-  await update(ref(db, "rooms/" + roomId), {
-    board: Array(9).fill(""),
-    turn: "X",
-    winner: ""
-  });
+// ============ LEAVE ============
+window.leaveRoom = async function () {
+  if (!roomId) { goToLobby(); return; }
+  const confirmLeave = confirm("Leave this room? The room will be closed for both players.");
+  if (!confirmLeave) return;
+  await remove(ref(db, "rooms/" + roomId));
+  goToLobby();
 };
+
+function goToLobby() {
+  if (roomListener) { roomListener(); roomListener = null; }
+  clearSession();
+  roomId = null;
+  mySymbol = null;
+  gameActive = false;
+  lastData = null;
+  hideAllScreens();
+  show("lobby");
+}
+
+// ============ AUTO-REJOIN ============
+async function init() {
+  const savedName = localStorage.getItem("xoxo_name");
+  if (savedName) {
+    myName = savedName;
+    document.getElementById("lobbyGreeting").innerText =
+      "Hi " + myName + "! Create a new game or join your friend's room";
+  }
+
+  const session = loadSession();
+  if (session && session.roomId && session.mySymbol && session.myName) {
+    const snap = await get(ref(db, "rooms/" + session.roomId));
+    if (snap.exists()) {
+      const data = snap.val();
+      const slotName = data.names?.[session.mySymbol];
+      if (data.players?.[session.mySymbol] && slotName === session.myName) {
+        roomId = session.roomId;
+        mySymbol = session.mySymbol;
+        myName = session.myName;
+        enterRoom();
+        return;
+      }
+    }
+    clearSession();
+  }
+
+  hideAllScreens();
+  if (myName) show("lobby");
+  else show("namePrompt");
+}
+
+init();
