@@ -7,43 +7,54 @@
     <link rel="stylesheet" href="style.css">
     <title>XoXo</title>
 </head>
+
 <body>
     <h1 class="main-title">XOXO</h1>
-    <div class="container">
-        <div class="grid">
 
-            <div class="row">
-                <div onclick="handleClick(this)" id="0" class="col"></div>
-                <div onclick="handleClick(this)" id="1" class="col"></div>
-                <div onclick="handleClick(this)" id="2" class="col"></div>
-            </div>
+    <div id="lobby">
+        <h2>XoXo Online</h2>
+        <p>Create a new game or join your friend's room</p>
 
-            <div class="row">
-                <div onclick="handleClick(this)" id="3" class="col"></div>
-                <div onclick="handleClick(this)" id="4" class="col"></div>
-                <div onclick="handleClick(this)" id="5" class="col"></div>
-            </div>
+        <button class="btn" onclick="createRoom()">Create Room</button>
 
-            <div class="row">
-                <div onclick="handleClick(this)" id="6" class="col"></div>
-                <div onclick="handleClick(this)" id="7" class="col"></div>
-                <div onclick="handleClick(this)" id="8" class="col"></div>
-            </div>
-
-        </div>
-
-        <button id="px">P1: X / P2: O</button>
-        <button id="ng">New Game</button>
-    </div>
-
-    <div class="overlay" id="resultOverlay">
-        <div class="result-box">
-            <h2 id="winningMessage"></h2>
-            <button id="newGameBtn">Play Again</button>
+        <div style="margin-top: 16px;">
+            <input type="text" id="joinCodeInput" placeholder="Enter Room Code" maxlength="6" />
+            <button class="btn" onclick="joinRoom()">Join Room</button>
         </div>
     </div>
 
-    <script src="script.js"></script>
+    <div id="game" class="hidden">
+        <div id="roomCodeDisplay"></div>
+        <div id="status"></div>
+
+        <div class="container">
+            <div class="grid">
+
+                <div class="row">
+                    <div onclick="handleClick(this)" id="0" class="col"></div>
+                    <div onclick="handleClick(this)" id="1" class="col"></div>
+                    <div onclick="handleClick(this)" id="2" class="col"></div>
+                </div>
+
+                <div class="row">
+                    <div onclick="handleClick(this)" id="3" class="col"></div>
+                    <div onclick="handleClick(this)" id="4" class="col"></div>
+                    <div onclick="handleClick(this)" id="5" class="col"></div>
+                </div>
+
+                <div class="row">
+                    <div onclick="handleClick(this)" id="6" class="col"></div>
+                    <div onclick="handleClick(this)" id="7" class="col"></div>
+                    <div onclick="handleClick(this)" id="8" class="col"></div>
+                </div>
+
+            </div>
+
+            <button class="btn" onclick="resetOnlineGame()">New Game</button>
+        </div>
+    </div>
+
+    <script type="module" src="script.js"></script>
 </body>
 
 </html>
