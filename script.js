@@ -40,6 +40,20 @@ const WIN_PATTERNS = [
   [0,4,8],[2,4,6]
 ];
 
+// ============ GLOBAL AUDIO CONTROLLER ============
+// Forces only ONE audio to play at a time and forces volume to 90%
+document.addEventListener('play', function(e){
+  if(e.target.tagName === 'AUDIO'){
+      e.target.volume = 0.9;
+      const audios = document.getElementsByTagName('audio');
+      for(let i = 0; i < audios.length; i++){
+          if(audios[i] !== e.target){
+              audios[i].pause();
+          }
+      }
+  }
+}, true);
+
 // ============ KEYBOARD LISTENERS ============
 window.handleNameKeyPress = function(e) {
   if (e.key === 'Enter') submitName();
@@ -47,6 +61,24 @@ window.handleNameKeyPress = function(e) {
 
 window.handleJoinKeyPress = function(e) {
   if (e.key === 'Enter') joinRoom();
+};
+
+window.handleChatKeyPress = function(e) {
+  if (e.key === 'Enter') sendChatMessage();
+};
+
+window.handleChatInput = function() {
+  const input = document.getElementById("chatInput");
+  const micBtn = document.getElementById("micBtn");
+  const sendBtn = document.getElementById("sendBtn");
+  
+  if (input.value.trim().length > 0) {
+    micBtn.classList.add("hidden");
+    sendBtn.classList.remove("hidden");
+  } else {
+    sendBtn.classList.add("hidden");
+    micBtn.classList.remove("hidden");
+  }
 };
 
 // ============ CUSTOM MODAL ============
@@ -249,7 +281,6 @@ function enterRoom() {
     }
     lastData = data;
 
-    // Client Swap Logic
     if (data.clients && data.clients[mySymbol] !== clientId) {
       const otherSymbol = mySymbol === "X" ? "O" : "X";
       if (data.clients[otherSymbol] === clientId) {
@@ -265,7 +296,6 @@ function enterRoom() {
       }
     }
 
-    // Chat Updates
     if (data.chats) {
       renderChats(data.chats);
     } else {
@@ -305,7 +335,10 @@ window.sendChatMessage = async function(textOverride = null) {
   const text = textOverride || input.value.trim();
   if (!text || !roomId || !mySymbol) return;
 
-  if(!textOverride) input.value = "";
+  if(!textOverride) {
+    input.value = "";
+    handleChatInput(); // Reset the buttons back to Mic
+  }
   
   const chatRef = ref(db, `rooms/${roomId}/chats`);
   await push(chatRef, {
@@ -316,11 +349,6 @@ window.sendChatMessage = async function(textOverride = null) {
   await update(ref(db, "rooms/" + roomId), { lastActivity: Date.now() });
 };
 
-window.handleChatKeyPress = function(e) {
-  if (e.key === 'Enter') sendChatMessage();
-};
-
-// AUDIO RECORDING LOGIC
 window.toggleRecording = async function() {
   const micBtn = document.getElementById("micBtn");
   
@@ -340,9 +368,8 @@ window.toggleRecording = async function() {
         reader.readAsDataURL(audioBlob);
         reader.onloadend = () => {
           const base64Audio = reader.result;
-          sendChatMessage(base64Audio); // Send the audio string as a message
+          sendChatMessage(base64Audio);
         };
-        // Stop all tracks to release the microphone
         stream.getTracks().forEach(track => track.stop());
       };
 
@@ -374,10 +401,10 @@ function renderChats(chatsObj) {
   chatBox.innerHTML = chatValues.map(c => {
     const isMe = c.sender === mySymbol;
     
-    // Check if the message is a Base64 Audio string
     let messageContent = "";
     if (c.text.startsWith("data:audio/")) {
-      messageContent = `<audio controls src="${c.text}" class="chat-audio"></audio>`;
+      // Added controlsList to block download/playback rate and hide the 3-dots
+      messageContent = `<audio controls controlsList="nodownload noplaybackrate" src="${c.text}" class="chat-audio"></audio>`;
     } else {
       messageContent = `<span class="msg-text">${escapeHtml(c.text)}</span>`;
     }

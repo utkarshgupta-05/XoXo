@@ -307,40 +307,77 @@ button:active { transform: translateY(-1px); }
 .msg-me { align-self: flex-end; background: linear-gradient(to right, #00d2ff, #3a7bd5); border-bottom-right-radius: 4px; }
 .msg-them { align-self: flex-start; background: rgba(255, 255, 255, 0.15); border-bottom-left-radius: 4px; }
 
-/* Audio Message Styles */
+/* STRICT AUDIO HIDING CSS (Webkit/Blink Browsers) */
 .chat-audio {
     height: 40px;
-    width: 200px;
+    width: 220px;
     outline: none;
     border-radius: 20px;
 }
-/* Tweaks for webkit audio controls */
+.chat-audio::-webkit-media-controls-mute-button,
+.chat-audio::-webkit-media-controls-volume-slider {
+    display: none !important;
+}
 .chat-audio::-webkit-media-controls-panel {
-    background-color: rgba(255, 255, 255, 0.8);
+    background-color: rgba(255, 255, 255, 0.9);
 }
 
-.chat-input-area { display: flex; padding: 15px; gap: 8px; background: rgba(255, 255, 255, 0.05); border-top: 1px solid rgba(255, 255, 255, 0.1); align-items: center; }
+.chat-input-area { 
+    display: flex; padding: 12px 15px; gap: 10px; 
+    background: rgba(255, 255, 255, 0.05); 
+    border-top: 1px solid rgba(255, 255, 255, 0.1); 
+    align-items: center; 
+}
 
-/* Mic Button */
-.mic-btn {
-    background: rgba(255, 255, 255, 0.1);
-    border: none;
+#chatInput { 
+    flex: 1; padding: 12px 18px; border-radius: 50px; border: none; 
+    outline: none; font-size: 0.95rem; text-align: left; width: 100%; 
+    margin: 0; background: rgba(255, 255, 255, 0.9); color: #333; 
+}
+
+/* WhatsApp-Style Action Button Wrapper */
+.chat-action-wrapper {
+    position: relative;
+    width: 44px;
+    height: 44px;
+    flex-shrink: 0;
+}
+
+.chat-action-btn {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
     border-radius: 50%;
-    width: 40px;
-    height: 40px;
-    font-size: 1.2rem;
+    background: white;
+    border: none;
     display: flex;
     justify-content: center;
     align-items: center;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: transform 0.2s ease, opacity 0.2s ease, background 0.3s ease;
     padding: 0 !important;
-    box-shadow: none;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2) !important;
 }
 
-.mic-btn.recording {
+.chat-action-btn:hover {
+    transform: scale(1.05);
+}
+
+.chat-action-btn.hidden {
+    transform: scale(0);
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* Mic Recording Pulse State */
+.chat-action-btn.recording {
     background: #ff2d55;
     animation: pulseMic 1s infinite;
+}
+.chat-action-btn.recording svg {
+    fill: white !important;
 }
 
 @keyframes pulseMic {
@@ -349,9 +386,6 @@ button:active { transform: translateY(-1px); }
     100% { box-shadow: 0 0 0 0 rgba(255, 45, 85, 0); }
 }
 
-#chatInput { flex: 1; padding: 10px 15px; border-radius: 50px; border: none; outline: none; font-size: 0.9rem; text-align: left; width: 100%; margin: 0; background: rgba(255, 255, 255, 0.9); color: #333; }
-.chat-send-btn { padding: 0 15px !important; width: auto !important; border-radius: 50px !important; display: flex; justify-content: center; align-items: center; margin: 0; height: 40px; }
-.chat-badge { display: inline-block; width: 12px; height: 12px; background: #ff2d55; border-radius: 50%; box-shadow: 0 0 8px #ff2d55; }
 
 /* ============ RESPONSIVENESS ============ */
 
@@ -364,7 +398,7 @@ button:active { transform: translateY(-1px); }
     .controls { flex-direction: column; width: 100%; }
 
     /* Override mobile button styles for chat components to protect layout */
-    button:not(.close-chat):not(.chat-send-btn):not(.chat-fab):not(.mic-btn) { width: 100%; padding: 15px; }
+    button:not(.close-chat):not(.chat-action-btn):not(.chat-fab) { width: 100%; padding: 15px; }
 
     #lobby input, #namePrompt input { width: 100%; margin: 8px 0; }
 
@@ -381,7 +415,7 @@ button:active { transform: translateY(-1px); }
         z-index: 1200; 
     }
     
-    .chat-audio { width: 160px; } /* Slightly smaller audio player on mobile */
+    .chat-audio { width: 180px; } 
 }
 
 @media (max-width: 480px) {
