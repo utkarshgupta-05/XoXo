@@ -389,6 +389,31 @@ window.toggleRecording = async function() {
   }
 };
 
+const audioBlobCache = {}; 
+
+function getAudioUrl(dataURI) {
+  // If we already converted this audio, just return the cached URL
+  if (audioBlobCache[dataURI]) return audioBlobCache[dataURI];
+
+  try {
+    // Convert Base64 string back into a real Blob file
+    const byteString = atob(dataURI.split(',')[1]);
+    const mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0];
+    const ab = new ArrayBuffer(byteString.length);
+    const ia = new Uint8Array(ab);
+    for (let i = 0; i < byteString.length; i++) {
+      ia[i] = byteString.charCodeAt(i);
+    }
+    const blob = new Blob([ab], { type: mimeString });
+    const url = URL.createObjectURL(blob);
+    
+    audioBlobCache[dataURI] = url; // Save it
+    return url;
+  } catch (e) {
+    return dataURI; // Fallback just in case
+  }
+}
+
 function renderChats(chatsObj) {
   const chatBox = document.getElementById("chatMessages");
   const chatValues = Object.values(chatsObj);
@@ -403,9 +428,9 @@ function renderChats(chatsObj) {
     
     let messageContent = "";
     if (c.text.startsWith("data:audio/")) {
-      // Added controlsList to block download/playback rate and hide the 3-dots
-      messageContent = `<audio controls controlsList="nodownload noplaybackrate" src="${c.text}" class="chat-audio"></audio>`;
-    } else {
+      const blobUrl = getAudioUrl(c.text); // Convert it here!
+      messageContent = `<audio controls controlsList="nodownload noplaybackrate" src="${blobUrl}" class="chat-audio"></audio>`;
+    }else {
       messageContent = `<span class="msg-text">${escapeHtml(c.text)}</span>`;
     }
 
