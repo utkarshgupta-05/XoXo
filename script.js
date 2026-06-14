@@ -5,13 +5,13 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
 const firebaseConfig = {
-  apiKey: "",
-  authDomain: "",
-  databaseURL: "",
-  projectId: "",
-  storageBucket: "",
-  messagingSenderId: "",
-  appId: ""
+  apiKey: "AIzaSyCB08QbuhiacEq6SfNSXCUyRBBfXvgciyA",
+  authDomain: "xoxo-95576.firebaseapp.com",
+  databaseURL: "https://xoxo-95576-default-rtdb.firebaseio.com",
+  projectId: "xoxo-95576",
+  storageBucket: "xoxo-95576.firebasestorage.app",
+  messagingSenderId: "975156757943",
+  appId: "1:975156757943:web:8bc137b8d0b73a73ee1432"
 };
 
 const app = initializeApp(firebaseConfig);
