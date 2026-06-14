@@ -27,13 +27,22 @@ let lastData = null;
 let isChatOpen = false;
 let chatLength = 0;
 
-const INACTIVITY_MS = 1000 * 60 * 60 * 24 * 7; // 1 week inactivity timeout for rooms
+const INACTIVITY_MS = 1000 * 60 * 60 * 24; // 24 hours
 
 const WIN_PATTERNS = [
   [0,1,2],[3,4,5],[6,7,8],
   [0,3,6],[1,4,7],[2,5,8],
   [0,4,8],[2,4,6]
 ];
+
+// ============ KEYBOARD LISTENERS ============
+window.handleNameKeyPress = function(e) {
+  if (e.key === 'Enter') submitName();
+};
+
+window.handleJoinKeyPress = function(e) {
+  if (e.key === 'Enter') joinRoom();
+};
 
 // ============ CUSTOM MODAL ============
 window.showModal = function (message, type = 'alert') {
@@ -72,7 +81,6 @@ window.showModal = function (message, type = 'alert') {
 };
 
 // ============ SVG ASSETS ============
-
 function heartSVG() {
   return `
   <svg class="mark-svg heart-doodle" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
@@ -113,7 +121,8 @@ function avatarSVG(online) {
 }
 
 function generateRoomCode() {
-  return Math.random().toString(36).substring(2, 8).toUpperCase();
+  // Base36 generates alphanumeric strings automatically (0-9, a-z). Enforcing lowercase strictly.
+  return Math.random().toString(36).substring(2, 8).toLowerCase();
 }
 
 function checkWinner(board) {
@@ -190,7 +199,8 @@ window.createRoom = async function () {
 
 window.joinRoom = async function () {
   const codeInput = document.getElementById("joinCodeInput");
-  const code = codeInput.value.trim().toUpperCase();
+  // Force strict lowercase formatting for room joins
+  const code = codeInput.value.trim().toLowerCase();
   if (!code) { showModal("Please enter a room code"); return; }
 
   const snap = await get(ref(db, "rooms/" + code));

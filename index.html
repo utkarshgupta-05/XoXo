@@ -14,7 +14,7 @@
     <div id="namePrompt" class="hidden">
         <h2>Welcome!</h2>
         <p style="margin-bottom: 15px; opacity: 0.9;">Choose a name to start playing.</p>
-        <input type="text" id="playerNameInput" placeholder="Enter your name" maxlength="14" autocomplete="off" spellcheck="false" />
+        <input type="text" id="playerNameInput" placeholder="Enter your name" maxlength="14" autocomplete="off" spellcheck="false" onkeypress="handleNameKeyPress(event)" />
         <button class="btn" onclick="submitName()">Start Game</button>
     </div>
 
@@ -29,7 +29,7 @@
         <button class="btn" onclick="createRoom()">Create Room</button>
 
         <div style="margin-top: 16px;">
-            <input type="text" id="joinCodeInput" placeholder="Enter Room Code" maxlength="6" />
+            <input type="text" id="joinCodeInput" placeholder="Enter Room Code" maxlength="6" onkeypress="handleJoinKeyPress(event)" />
             <button class="btn" onclick="joinRoom()">Join Room</button>
         </div>
     </div>
