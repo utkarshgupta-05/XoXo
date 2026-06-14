@@ -32,7 +32,7 @@ let mediaRecorder = null;
 let audioChunks = [];
 let isRecording = false;
 
-const INACTIVITY_MS = 1000 * 60 * 60 * 24; // 24 hours
+const INACTIVITY_MS = 1000 * 60 * 60 * 2; // 2 hours in milliseconds
 
 const WIN_PATTERNS = [
   [0, 1, 2], [3, 4, 5], [6, 7, 8],
@@ -690,6 +690,9 @@ function goToLobby() {
 
 // ============ INITIALIZATION ============
 async function init() {
+  // Call the janitor the exact moment the app initializes
+  runLobbyJanitor();
+
   clientId = localStorage.getItem("xoxo_clientId");
   if (!clientId) {
     clientId = Math.random().toString(36).substring(2, 9);
@@ -723,6 +726,30 @@ async function init() {
   hideAllScreens();
   if (myName) show("lobby");
   else show("namePrompt");
+}
+
+// ============ THE LOBBY JANITOR ============
+// This runs silently in the background when anyone visits the site
+async function runLobbyJanitor() {
+  try {
+    const snap = await get(ref(db, "rooms"));
+    if (snap.exists()) {
+      const now = Date.now();
+      
+      // Loop through every single room currently in the database
+      snap.forEach((childSnap) => {
+        const room = childSnap.val();
+        
+        // If the room has a timestamp, and it is older than 24 hours (INACTIVITY_MS)
+        if (room.lastActivity && (now - room.lastActivity > INACTIVITY_MS)) {
+          // Delete it!
+          remove(ref(db, "rooms/" + childSnap.key));
+        }
+      });
+    }
+  } catch (error) {
+    console.error("Janitor cleanup failed silently:", error);
+  }
 }
 
 init();
