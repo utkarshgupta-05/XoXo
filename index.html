@@ -19,8 +19,12 @@
     </div>
 
     <div id="lobby" class="hidden">
-        <h2>XoXo Online</h2>
-        <p id="lobbyGreeting">Create a new game or join your friend's room</p>
+        <h2>XoXo</h2>
+        
+        <div style="margin-bottom: 20px;">
+            <span id="lobbyGreeting" style="opacity: 0.9;">Create a new game or join your friend's room</span>
+            <button class="edit-name-btn" onclick="editName()">✎ Edit Name</button>
+        </div>
 
         <button class="btn" onclick="createRoom()">Create Room</button>
 

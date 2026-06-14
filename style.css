@@ -204,6 +204,28 @@ button:active {
     margin: 12px 0 16px;
 }
 
+/* ============ EDIT NAME BUTTON ============ */
+.edit-name-btn {
+    background: none;
+    border: none;
+    color: #ffe9a8; /* Matches the gold/yellow used in rematch text */
+    cursor: pointer;
+    font-size: 0.9rem;
+    margin-left: 10px;
+    font-weight: bold;
+    text-decoration: underline;
+    transition: color 0.2s, transform 0.2s;
+    box-shadow: none;
+    padding: 0;
+}
+
+.edit-name-btn:hover {
+    color: #ffffff;
+    transform: translateY(-1px);
+    box-shadow: none;
+    background-image: none;
+}
+
 /* ============ PLAYER STATUS BAR (avatars & score) ============ */
 .players-status {
     display: flex;

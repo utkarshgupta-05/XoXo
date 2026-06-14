@@ -156,6 +156,17 @@ window.submitName = function () {
   show("lobby");
 };
 
+// ============ EDIT NAME ============
+window.editName = function () {
+  // Pre-fill the input with their current name
+  const input = document.getElementById("playerNameInput");
+  input.value = myName || ""; 
+  
+  // Hide the lobby and show the name prompt
+  hideAllScreens();
+  show("namePrompt");
+};
+
 // ============ ROOM CREATE / JOIN ============
 window.createRoom = async function () {
   roomId = generateRoomCode();
