@@ -27,6 +27,11 @@ let lastData = null;
 let isChatOpen = false;
 let chatLength = 0;
 
+// Audio Recording Variables
+let mediaRecorder = null;
+let audioChunks = [];
+let isRecording = false;
+
 const INACTIVITY_MS = 1000 * 60 * 60 * 24; // 24 hours
 
 const WIN_PATTERNS = [
@@ -56,7 +61,6 @@ window.showModal = function (message, type = 'alert') {
     msgEl.innerText = message;
     overlay.classList.remove("hidden");
 
-    // Reset button visibility
     okBtn.classList.add("hidden");
     yesBtn.classList.add("hidden");
     cancelBtn.classList.add("hidden");
@@ -121,7 +125,6 @@ function avatarSVG(online) {
 }
 
 function generateRoomCode() {
-  // Base36 generates alphanumeric strings automatically (0-9, a-z). Enforcing lowercase strictly.
   return Math.random().toString(36).substring(2, 8).toLowerCase();
 }
 
@@ -199,7 +202,6 @@ window.createRoom = async function () {
 
 window.joinRoom = async function () {
   const codeInput = document.getElementById("joinCodeInput");
-  // Force strict lowercase formatting for room joins
   const code = codeInput.value.trim().toLowerCase();
   if (!code) { showModal("Please enter a room code"); return; }
 
@@ -231,7 +233,7 @@ function enterRoom() {
   chatLength = 0;
   isChatOpen = false;
   document.getElementById("chatPanel").classList.add("closed");
-  show("chatFab"); // Reveal the chat button
+  show("chatFab");
 
   const onlineRef = ref(db, "rooms/" + roomId + "/online/" + mySymbol);
   set(onlineRef, true);
@@ -247,7 +249,7 @@ function enterRoom() {
     }
     lastData = data;
 
-    // --- CLIENT SWAP LOGIC (Switches symbols dynamically) ---
+    // Client Swap Logic
     if (data.clients && data.clients[mySymbol] !== clientId) {
       const otherSymbol = mySymbol === "X" ? "O" : "X";
       if (data.clients[otherSymbol] === clientId) {
@@ -262,9 +264,8 @@ function enterRoom() {
         onDisconnect(newRef).set(false);
       }
     }
-    // --------------------------------------------------------
 
-    // --- CHAT UPDATES ---
+    // Chat Updates
     if (data.chats) {
       renderChats(data.chats);
     } else {
@@ -285,7 +286,7 @@ function enterRoom() {
   });
 }
 
-// ============ CHAT SYSTEM ============
+// ============ CHAT & AUDIO SYSTEM ============
 window.toggleChat = function() {
   const panel = document.getElementById("chatPanel");
   isChatOpen = !isChatOpen;
@@ -299,12 +300,13 @@ window.toggleChat = function() {
   }
 };
 
-window.sendChatMessage = async function() {
+window.sendChatMessage = async function(textOverride = null) {
   const input = document.getElementById("chatInput");
-  const text = input.value.trim();
+  const text = textOverride || input.value.trim();
   if (!text || !roomId || !mySymbol) return;
 
-  input.value = "";
+  if(!textOverride) input.value = "";
+  
   const chatRef = ref(db, `rooms/${roomId}/chats`);
   await push(chatRef, {
     sender: mySymbol,
@@ -318,20 +320,69 @@ window.handleChatKeyPress = function(e) {
   if (e.key === 'Enter') sendChatMessage();
 };
 
+// AUDIO RECORDING LOGIC
+window.toggleRecording = async function() {
+  const micBtn = document.getElementById("micBtn");
+  
+  if (!isRecording) {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaRecorder = new MediaRecorder(stream);
+      audioChunks = [];
+      
+      mediaRecorder.ondataavailable = e => {
+        if (e.data.size > 0) audioChunks.push(e.data);
+      };
+      
+      mediaRecorder.onstop = () => {
+        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+        const reader = new FileReader();
+        reader.readAsDataURL(audioBlob);
+        reader.onloadend = () => {
+          const base64Audio = reader.result;
+          sendChatMessage(base64Audio); // Send the audio string as a message
+        };
+        // Stop all tracks to release the microphone
+        stream.getTracks().forEach(track => track.stop());
+      };
+
+      mediaRecorder.start();
+      isRecording = true;
+      micBtn.classList.add("recording");
+      
+    } catch (err) {
+      showModal("Microphone access denied or not available.");
+    }
+  } else {
+    if (mediaRecorder && mediaRecorder.state !== "inactive") {
+      mediaRecorder.stop();
+    }
+    isRecording = false;
+    micBtn.classList.remove("recording");
+  }
+};
+
 function renderChats(chatsObj) {
   const chatBox = document.getElementById("chatMessages");
   const chatValues = Object.values(chatsObj);
 
-  if (chatValues.length > chatLength) {
-    if (!isChatOpen) {
-      document.getElementById("chatBadge").classList.remove("hidden");
-    }
+  if (chatValues.length > chatLength && !isChatOpen) {
+    document.getElementById("chatBadge").classList.remove("hidden");
   }
   chatLength = chatValues.length;
 
   chatBox.innerHTML = chatValues.map(c => {
     const isMe = c.sender === mySymbol;
-    return `<div class="chat-msg ${isMe ? 'msg-me' : 'msg-them'}"><span class="msg-text">${escapeHtml(c.text)}</span></div>`;
+    
+    // Check if the message is a Base64 Audio string
+    let messageContent = "";
+    if (c.text.startsWith("data:audio/")) {
+      messageContent = `<audio controls src="${c.text}" class="chat-audio"></audio>`;
+    } else {
+      messageContent = `<span class="msg-text">${escapeHtml(c.text)}</span>`;
+    }
+
+    return `<div class="chat-msg ${isMe ? 'msg-me' : 'msg-them'}">${messageContent}</div>`;
   }).join("");
 
   if (isChatOpen) scrollToChatBottom();
@@ -483,12 +534,11 @@ function renderRematch(data) {
     btn.innerText = "New Game";
   }
 
-  // If both agreed, the X player resets the board and SWAPS roles.
   if (mine && opp && mySymbol === "X") {
     const s = data.scores || { X: 0, O: 0, draws: 0 };
     update(ref(db, "rooms/" + roomId), {
       board: Array(9).fill(""),
-      turn: "X", // X always goes first
+      turn: "X", 
       winner: "",
       rematch: { X: false, O: false },
       names: { X: data.names.O, O: data.names.X },         
@@ -501,7 +551,7 @@ function renderRematch(data) {
 
 window.requestRematch = async function () {
   if (!roomId || !lastData) return;
-  if (!lastData.winner) return; // only after game over
+  if (!lastData.winner) return;
 
   const current = !!(lastData.rematch && lastData.rematch[mySymbol]);
   await update(ref(db, "rooms/" + roomId + "/rematch"), {
@@ -568,10 +618,15 @@ function goToLobby() {
   isChatOpen = false;
   chatLength = 0;
   
+  if (mediaRecorder && mediaRecorder.state !== "inactive") {
+      mediaRecorder.stop();
+  }
+  isRecording = false;
+  
   const panel = document.getElementById("chatPanel");
   if (panel) panel.classList.add("closed");
   
-  hide("chatFab"); // Hide chat button when returning to lobby
+  hide("chatFab");
   
   hideAllScreens();
   show("lobby");

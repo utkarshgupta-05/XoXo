@@ -160,13 +160,12 @@ button:active { transform: translateY(-1px); }
 #roomCodeDisplay, #waitRoomCode {
     font-size: 1.1rem; margin-bottom: 10px; padding: 8px 18px;
     background: rgba(255, 255, 255, 0.1); border-radius: 50px; display: inline-block;
-    /* Forces code to visually display in lowercase matching the JS constraints */
     text-transform: lowercase; 
 }
 
 #status { font-size: 1.3rem; font-weight: 600; margin: 12px 0 16px; }
 
-/* ============ PLAYER STATUS BAR (Fixed horizontally) ============ */
+/* ============ PLAYER STATUS BAR ============ */
 .players-status {
     display: flex;
     align-items: center;
@@ -269,13 +268,13 @@ button:active { transform: translateY(-1px); }
 }
 
 
-/* ============ CHAT PANEL ============ */
+/* ============ CHAT PANEL & AUDIO ============ */
 #chatPanel {
     position: fixed;
     bottom: 105px; 
     right: 25px;
-    width: 320px;
-    height: 450px;
+    width: 350px;
+    height: 480px;
     background: rgba(20, 10, 40, 0.85);
     backdrop-filter: blur(15px);
     -webkit-backdrop-filter: blur(15px);
@@ -307,9 +306,51 @@ button:active { transform: translateY(-1px); }
 .chat-msg { max-width: 85%; padding: 10px 15px; border-radius: 18px; font-size: 0.9rem; word-wrap: break-word; animation: popIn 0.2s forwards; }
 .msg-me { align-self: flex-end; background: linear-gradient(to right, #00d2ff, #3a7bd5); border-bottom-right-radius: 4px; }
 .msg-them { align-self: flex-start; background: rgba(255, 255, 255, 0.15); border-bottom-left-radius: 4px; }
-.chat-input-area { display: flex; padding: 15px; gap: 10px; background: rgba(255, 255, 255, 0.05); border-top: 1px solid rgba(255, 255, 255, 0.1); }
+
+/* Audio Message Styles */
+.chat-audio {
+    height: 40px;
+    width: 200px;
+    outline: none;
+    border-radius: 20px;
+}
+/* Tweaks for webkit audio controls */
+.chat-audio::-webkit-media-controls-panel {
+    background-color: rgba(255, 255, 255, 0.8);
+}
+
+.chat-input-area { display: flex; padding: 15px; gap: 8px; background: rgba(255, 255, 255, 0.05); border-top: 1px solid rgba(255, 255, 255, 0.1); align-items: center; }
+
+/* Mic Button */
+.mic-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    font-size: 1.2rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    padding: 0 !important;
+    box-shadow: none;
+}
+
+.mic-btn.recording {
+    background: #ff2d55;
+    animation: pulseMic 1s infinite;
+}
+
+@keyframes pulseMic {
+    0% { box-shadow: 0 0 0 0 rgba(255, 45, 85, 0.7); }
+    70% { box-shadow: 0 0 0 10px rgba(255, 45, 85, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(255, 45, 85, 0); }
+}
+
 #chatInput { flex: 1; padding: 10px 15px; border-radius: 50px; border: none; outline: none; font-size: 0.9rem; text-align: left; width: 100%; margin: 0; background: rgba(255, 255, 255, 0.9); color: #333; }
-.chat-send-btn { padding: 0 15px !important; width: auto !important; border-radius: 50px !important; display: flex; justify-content: center; align-items: center; margin: 0; }
+.chat-send-btn { padding: 0 15px !important; width: auto !important; border-radius: 50px !important; display: flex; justify-content: center; align-items: center; margin: 0; height: 40px; }
 .chat-badge { display: inline-block; width: 12px; height: 12px; background: #ff2d55; border-radius: 50%; box-shadow: 0 0 8px #ff2d55; }
 
 /* ============ RESPONSIVENESS ============ */
@@ -323,7 +364,7 @@ button:active { transform: translateY(-1px); }
     .controls { flex-direction: column; width: 100%; }
 
     /* Override mobile button styles for chat components to protect layout */
-    button:not(.close-chat):not(.chat-send-btn):not(.chat-fab) { width: 100%; padding: 15px; }
+    button:not(.close-chat):not(.chat-send-btn):not(.chat-fab):not(.mic-btn) { width: 100%; padding: 15px; }
 
     #lobby input, #namePrompt input { width: 100%; margin: 8px 0; }
 
@@ -339,6 +380,8 @@ button:active { transform: translateY(-1px); }
         border-radius: 20px 20px 0 0;
         z-index: 1200; 
     }
+    
+    .chat-audio { width: 160px; } /* Slightly smaller audio player on mobile */
 }
 
 @media (max-width: 480px) {

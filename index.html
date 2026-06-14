@@ -92,6 +92,8 @@
         </div>
         <div id="chatMessages" class="chat-messages"></div>
         <div class="chat-input-area">
+            <button id="micBtn" class="mic-btn" onclick="toggleRecording()">🎤</button>
+            
             <input type="text" id="chatInput" placeholder="Type a message..." maxlength="100" autocomplete="off" onkeypress="handleChatKeyPress(event)" />
             <button class="btn chat-send-btn" onclick="sendChatMessage()">➤</button>
         </div>
