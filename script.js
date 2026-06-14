@@ -20,6 +20,7 @@ const db = getDatabase(app);
 let roomId = null;
 let mySymbol = null;      // 'X' or 'O'
 let myName = null;
+let clientId = null;      // Unique ID to handle turn swapping safely
 let gameActive = false;
 let roomListener = null;
 let lastData = null;
@@ -32,41 +33,61 @@ const WIN_PATTERNS = [
   [0,4,8],[2,4,6]
 ];
 
+// ============ CUSTOM MODAL ============
+window.showModal = function (message, type = 'alert') {
+  return new Promise((resolve) => {
+    const overlay = document.getElementById("modalOverlay");
+    const msgEl = document.getElementById("modalMessage");
+    const okBtn = document.getElementById("modalOkBtn");
+    const yesBtn = document.getElementById("modalYesBtn");
+    const cancelBtn = document.getElementById("modalCancelBtn");
+
+    msgEl.innerText = message;
+    overlay.classList.remove("hidden");
+
+    // Reset button visibility
+    okBtn.classList.add("hidden");
+    yesBtn.classList.add("hidden");
+    cancelBtn.classList.add("hidden");
+
+    const cleanup = () => {
+      overlay.classList.add("hidden");
+      okBtn.onclick = null;
+      yesBtn.onclick = null;
+      cancelBtn.onclick = null;
+    };
+
+    if (type === 'alert') {
+      okBtn.classList.remove("hidden");
+      okBtn.onclick = () => { cleanup(); resolve(true); };
+    } else if (type === 'confirm') {
+      yesBtn.classList.remove("hidden");
+      cancelBtn.classList.remove("hidden");
+      yesBtn.onclick = () => { cleanup(); resolve(true); };
+      cancelBtn.onclick = () => { cleanup(); resolve(false); };
+    }
+  });
+};
+
 // ============ SVG ASSETS ============
 
-// Hand-drawn wobbly heart doodle (red) for "X" player
 function heartSVG() {
   return `
   <svg class="mark-svg heart-doodle" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-    <path d="M50 86
-             C 18 64, 8 44, 14 30
-             C 18 18, 36 14, 50 30
-             C 64 14, 82 18, 86 30
-             C 92 44, 82 64, 50 86 Z"
-          fill="none" stroke="#ff2d55" stroke-width="7"
-          stroke-linecap="round" stroke-linejoin="round"
-          stroke-dasharray="2 0" />
-    <path d="M30 34 C 33 30, 40 30, 42 34"
-          fill="none" stroke="#ff2d55" stroke-width="3.5"
-          stroke-linecap="round" opacity="0.7"/>
+    <path d="M50 86 C 18 64, 8 44, 14 30 C 18 18, 36 14, 50 30 C 64 14, 82 18, 86 30 C 92 44, 82 64, 50 86 Z"
+          fill="none" stroke="#ff2d55" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="2 0" />
+    <path d="M30 34 C 33 30, 40 30, 42 34" fill="none" stroke="#ff2d55" stroke-width="3.5" stroke-linecap="round" opacity="0.7"/>
   </svg>`;
 }
 
-// Hand-drawn wobbly circle doodle (blue) for "O" player
 function circleSVG() {
   return `
   <svg class="mark-svg circle-doodle" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-    <path d="M52 18
-             C 78 16, 90 38, 84 58
-             C 78 80, 50 90, 28 82
-             C 8 74, 8 44, 22 28
-             C 32 18, 44 16, 56 18"
-          fill="none" stroke="#2d7dff" stroke-width="7"
-          stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M52 18 C 78 16, 90 38, 84 58 C 78 80, 50 90, 28 82 C 8 74, 8 44, 22 28 C 32 18, 44 16, 56 18"
+          fill="none" stroke="#2d7dff" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
   </svg>`;
 }
 
-// Bitmoji-style cartoon avatar. `online` toggles green/grey ring + face mood.
 function avatarSVG(online) {
   const skin = "#f1c27d";
   const ring = online ? "#22c55e" : "#9ca3af";
@@ -79,15 +100,10 @@ function avatarSVG(online) {
   <svg class="avatar-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
     <circle cx="50" cy="50" r="48" fill="#ffffff"/>
     <circle cx="50" cy="50" r="48" fill="none" stroke="${ring}" stroke-width="5"/>
-    <!-- shoulders -->
     <path d="M18 96 C20 76 34 70 50 70 C66 70 80 76 82 96 Z" fill="${shirt}"/>
-    <!-- neck -->
     <rect x="44" y="58" width="12" height="14" rx="5" fill="${skin}"/>
-    <!-- head -->
     <circle cx="50" cy="44" r="22" fill="${skin}"/>
-    <!-- hair -->
     <path d="M28 42 C26 22 74 22 72 42 C72 34 64 28 50 28 C36 28 28 34 28 42 Z" fill="${hair}"/>
-    <!-- eyes -->
     <circle cx="42" cy="44" r="3" fill="#2b2b2b"/>
     <circle cx="58" cy="44" r="3" fill="#2b2b2b"/>
     ${mouth}
@@ -131,7 +147,7 @@ function loadSession() {
 window.submitName = function () {
   const input = document.getElementById("playerNameInput");
   const name = input.value.trim();
-  if (!name) { alert("Please enter your name"); return; }
+  if (!name) { showModal("Please enter your name"); return; }
   myName = name;
   localStorage.setItem("xoxo_name", myName);
   document.getElementById("lobbyGreeting").innerText =
@@ -150,6 +166,8 @@ window.createRoom = async function () {
     turn: "X",
     players: { X: true, O: false },
     names: { X: myName, O: "" },
+    clients: { X: clientId, O: "" },
+    scores: { X: 0, O: 0, draws: 0 },
     online: { X: true, O: false },
     rematch: { X: false, O: false },
     started: false,
@@ -164,13 +182,13 @@ window.createRoom = async function () {
 window.joinRoom = async function () {
   const codeInput = document.getElementById("joinCodeInput");
   const code = codeInput.value.trim().toUpperCase();
-  if (!code) { alert("Please enter a room code"); return; }
+  if (!code) { showModal("Please enter a room code"); return; }
 
   const snap = await get(ref(db, "rooms/" + code));
-  if (!snap.exists()) { alert("Room not found! Check the code."); return; }
+  if (!snap.exists()) { showModal("Room not found! Check the code."); return; }
 
   const data = snap.val();
-  if (data.players && data.players.O) { alert("Room is full!"); return; }
+  if (data.players && data.players.O) { showModal("Room is full!"); return; }
 
   roomId = code;
   mySymbol = "O";
@@ -178,6 +196,7 @@ window.joinRoom = async function () {
   await update(ref(db, "rooms/" + roomId), {
     "players/O": true,
     "names/O": myName,
+    "clients/O": clientId,
     "online/O": true,
     "rematch/O": false,
     lastActivity: Date.now()
@@ -200,11 +219,29 @@ function enterRoom() {
   roomListener = onValue(ref(db, "rooms/" + roomId), (snapshot) => {
     const data = snapshot.val();
     if (!data) {
-      alert("This room no longer exists.");
-      goToLobby();
+      showModal("This room no longer exists.").then(() => goToLobby());
       return;
     }
     lastData = data;
+
+    // --- CLIENT SWAP LOGIC (Switches symbols dynamically) ---
+    if (data.clients && data.clients[mySymbol] !== clientId) {
+      const otherSymbol = mySymbol === "X" ? "O" : "X";
+      if (data.clients[otherSymbol] === clientId) {
+        // Cancel old disconnect listener before swapping
+        const oldRef = ref(db, "rooms/" + roomId + "/online/" + mySymbol);
+        onDisconnect(oldRef).cancel();
+        
+        mySymbol = otherSymbol;
+        saveSession();
+        
+        // Re-establish online presence for new symbol
+        const newRef = ref(db, "rooms/" + roomId + "/online/" + mySymbol);
+        set(newRef, true);
+        onDisconnect(newRef).set(false);
+      }
+    }
+    // --------------------------------------------------------
 
     if (data.lastActivity && (Date.now() - data.lastActivity > INACTIVITY_MS)) {
       remove(ref(db, "rooms/" + roomId));
@@ -219,12 +256,14 @@ function enterRoom() {
   });
 }
 
-// ============ PLAYER STATUS BAR (avatars + online dot) ============
+// ============ PLAYER STATUS BAR & SCOREBOARD ============
 function buildPlayerCard(symbol, data) {
   const name = (data.names && data.names[symbol]) || (symbol === "X" ? "Player X" : "Player O");
   const online = !!(data.online && data.online[symbol]);
+  const score = data.scores ? data.scores[symbol] : 0;
   const mark = symbol === "X" ? heartSVG() : circleSVG();
   const youTag = symbol === mySymbol ? " (You)" : "";
+  
   return `
     <div class="player-card ${online ? "is-online" : "is-offline"}">
       <div class="avatar-wrap">
@@ -233,6 +272,7 @@ function buildPlayerCard(symbol, data) {
       </div>
       <div class="player-meta">
         <div class="player-name">${escapeHtml(name)}${youTag}</div>
+        <div class="player-score">Score: <span>${score}</span></div>
         <div class="player-mark">${mark}<span>${online ? "Online" : "Offline"}</span></div>
       </div>
     </div>`;
@@ -245,9 +285,10 @@ function escapeHtml(str) {
 }
 
 function renderStatusBar(elId, data) {
+  const draws = data.scores ? data.scores.draws : 0;
   document.getElementById(elId).innerHTML =
     buildPlayerCard("X", data) +
-    `<div class="vs-label">VS</div>` +
+    `<div class="vs-label">VS<br><span class="draws-text">${draws} Draws</span></div>` +
     buildPlayerCard("O", data);
 }
 
@@ -329,7 +370,6 @@ function renderRematch(data) {
   const r = data.rematch || { X: false, O: false };
   const gameOver = !!data.winner;
 
-  // Only allow rematch when the game has ended
   btn.disabled = !gameOver;
   btn.style.opacity = gameOver ? "1" : "0.5";
   btn.style.cursor = gameOver ? "pointer" : "not-allowed";
@@ -357,13 +397,17 @@ function renderRematch(data) {
     btn.innerText = "New Game";
   }
 
-  // If both agreed, the X player resets the board (single writer avoids races)
+  // If both agreed, the X player resets the board and SWAPS roles.
   if (mine && opp && mySymbol === "X") {
+    const s = data.scores || { X: 0, O: 0, draws: 0 };
     update(ref(db, "rooms/" + roomId), {
       board: Array(9).fill(""),
-      turn: "X",
+      turn: "X", // X always goes first
       winner: "",
       rematch: { X: false, O: false },
+      names: { X: data.names.O, O: data.names.X },         // Swap Names
+      clients: { X: data.clients.O, O: data.clients.X },   // Swap Client IDs to switch player symbols
+      scores: { X: s.O, O: s.X, draws: s.draws },          // Swap Scores to track the player
       lastActivity: Date.now()
     });
   }
@@ -374,7 +418,6 @@ window.requestRematch = async function () {
   if (!lastData.winner) return; // only after game over
 
   const current = !!(lastData.rematch && lastData.rematch[mySymbol]);
-  // Toggle my rematch vote (lets me cancel too)
   await update(ref(db, "rooms/" + roomId + "/rematch"), {
     [mySymbol]: !current
   });
@@ -402,18 +445,29 @@ window.handleClick = async function (el) {
   const newWinner = checkWinner(newBoard);
   const nextTurn = mySymbol === "X" ? "O" : "X";
 
-  await update(ref(db, "rooms/" + roomId), {
+  let updates = {
     board: newBoard,
     turn: nextTurn,
     winner: newWinner || "",
     lastActivity: Date.now()
-  });
+  };
+
+  // Update Scoreboard immediately on win/draw
+  if (newWinner) {
+    const s = data.scores || { X: 0, O: 0, draws: 0 };
+    if (newWinner === "draw") s.draws++;
+    else if (newWinner === "X") s.X++;
+    else if (newWinner === "O") s.O++;
+    updates.scores = s;
+  }
+
+  await update(ref(db, "rooms/" + roomId), updates);
 };
 
 // ============ LEAVE ============
 window.leaveRoom = async function () {
   if (!roomId) { goToLobby(); return; }
-  const confirmLeave = confirm("Leave this room? The room will be closed for both players.");
+  const confirmLeave = await showModal("Leave this room? The room will be closed for both players.", "confirm");
   if (!confirmLeave) return;
   await remove(ref(db, "rooms/" + roomId));
   goToLobby();
@@ -430,8 +484,15 @@ function goToLobby() {
   show("lobby");
 }
 
-// ============ AUTO-REJOIN ============
+// ============ INITIALIZATION ============
 async function init() {
+  // Generate a persistent Client ID for role-swapping logic
+  clientId = localStorage.getItem("xoxo_clientId");
+  if (!clientId) {
+    clientId = Math.random().toString(36).substring(2, 9);
+    localStorage.setItem("xoxo_clientId", clientId);
+  }
+
   const savedName = localStorage.getItem("xoxo_name");
   if (savedName) {
     myName = savedName;

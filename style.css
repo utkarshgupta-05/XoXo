@@ -29,7 +29,7 @@ body {
     filter: drop-shadow(0px 5px 5px rgba(0, 0, 0, 0.5));
 }
 
-/* 2. Main Game Container */
+/* 2. Main Game Container - Fixed Centering Constraints */
 .container {
     background: rgba(255, 255, 255, 0.1);
     backdrop-filter: blur(10px);
@@ -40,15 +40,25 @@ body {
     border: 1px solid rgba(255, 255, 255, 0.1);
     text-align: center;
     transition: filter 0.5s ease, transform 0.5s ease;
+    
+    /* Flex rules to force all inner content to exact center */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    max-width: 450px;
 }
 
 /* 3. The Grid */
 .grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(3, minmax(70px, 100px));
+    justify-content: center;
+    align-content: center;
     gap: 15px;
-    margin-bottom: 24px;
-    width: 100%;
+    margin: 0 auto 24px auto;
+    /* Removed width: 100% so margin: 0 auto can properly center the grid block */
 }
 
 .row {
@@ -59,8 +69,6 @@ body {
 .col {
     width: 100%;
     aspect-ratio: 1 / 1;
-    max-width: 100px;
-    max-height: 100px;
     background: rgba(255, 255, 255, 0.05);
     border-radius: 15px;
     display: flex;
@@ -105,6 +113,7 @@ body {
     justify-content: center;
     gap: 20px;
     flex-wrap: wrap;
+    width: 100%;
 }
 
 button {
@@ -195,7 +204,7 @@ button:active {
     margin: 12px 0 16px;
 }
 
-/* ============ PLAYER STATUS BAR (avatars) ============ */
+/* ============ PLAYER STATUS BAR (avatars & score) ============ */
 .players-status {
     display: flex;
     align-items: center;
@@ -243,6 +252,11 @@ button:active {
 
 .player-meta { text-align: left; }
 .player-name { font-weight: 700; font-size: 1rem; }
+
+/* Scoreboard Text Styles */
+.player-score { font-size: 0.85rem; color: #ffe9a8; font-weight: 600; margin-top: 2px; }
+.draws-text { font-size: 0.8rem; font-weight: normal; color: #e5e7eb; }
+
 .player-mark {
     display: flex;
     align-items: center;
@@ -260,6 +274,7 @@ button:active {
 
 /* ============ REMATCH INFO ============ */
 .rematch-info {
+    width: 100%;
     min-height: 22px;
     margin-bottom: 12px;
     font-size: 0.95rem;
@@ -267,7 +282,58 @@ button:active {
     color: #ffe9a8;
 }
 
-.hidden { display: none; }
+.hidden { display: none !important; }
+
+/* ============ CUSTOM MODAL OVERLAY ============ */
+#modalOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    opacity: 1;
+    transition: opacity 0.3s ease;
+}
+
+#modalOverlay.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+#modalBox {
+    background: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 30px;
+    border-radius: 25px;
+    box-shadow: 0 25px 45px rgba(0, 0, 0, 0.3);
+    text-align: center;
+    max-width: 400px;
+    width: 90%;
+    transform: scale(1);
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+#modalOverlay.hidden #modalBox {
+    transform: scale(0.8);
+}
+
+#modalMessage {
+    font-size: 1.2rem;
+    margin-bottom: 25px;
+    font-weight: 600;
+    line-height: 1.5;
+}
+
+.modal-controls {
+    margin-top: 10px;
+}
 
 /* ============ RESPONSIVENESS ============ */
 
@@ -280,17 +346,21 @@ button:active {
     #namePrompt,
     #waitingRoom {
         padding: 25px 15px;
-        width: 90%;
+        width: 95%; /* Better fit for mobile margins */
+    }
+
+    /* Fixed grid centering */
+    .grid { 
+        grid-template-columns: repeat(3, minmax(60px, 80px)); 
+        justify-content: center;
+        gap: 10px; 
+        margin: 0 auto 20px auto; 
     }
 
     .col {
-        max-width: 80px;
-        max-height: 80px;
         border-radius: 10px;
         padding: 8px;
     }
-
-    .grid { gap: 10px; margin-bottom: 20px; }
 
     .controls { flex-direction: column; width: 100%; }
 
@@ -307,14 +377,14 @@ button:active {
 /* Medium phones 351–480 fine-tune */
 @media (max-width: 480px) {
     .main-title { font-size: 3.4rem; }
-    .col { max-width: 78px; max-height: 78px; }
     .vs-label { font-size: 0.95rem; }
 }
 
 /* Small devices */
 @media (max-width: 350px) {
     .main-title { font-size: 2.8rem; }
-    .col { max-width: 70px; max-height: 70px; padding: 6px; }
+    .grid { grid-template-columns: repeat(3, minmax(50px, 70px)); }
+    .col { padding: 6px; }
     .avatar-wrap { width: 40px; height: 40px; }
     .player-meta { font-size: 0.85rem; }
 }

@@ -11,14 +11,13 @@
 <body>
     <h1 class="main-title">XOXO</h1>
 
-    <!-- ====== NAME PROMPT ====== -->
     <div id="namePrompt" class="hidden">
-        <h2>Enter Your Name</h2>
-        <input type="text" id="playerNameInput" placeholder="Your name" maxlength="14" />
-        <button class="btn" onclick="submitName()">Continue</button>
+        <h2>Welcome!</h2>
+        <p style="margin-bottom: 15px; opacity: 0.9;">Choose a name to start playing.</p>
+        <input type="text" id="playerNameInput" placeholder="Enter your name" maxlength="14" autocomplete="off" spellcheck="false" />
+        <button class="btn" onclick="submitName()">Start Game</button>
     </div>
 
-    <!-- ====== LOBBY ====== -->
     <div id="lobby" class="hidden">
         <h2>XoXo Online</h2>
         <p id="lobbyGreeting">Create a new game or join your friend's room</p>
@@ -31,7 +30,6 @@
         </div>
     </div>
 
-    <!-- ====== WAITING ROOM ====== -->
     <div id="waitingRoom" class="hidden">
         <div id="waitRoomCode"></div>
         <h2>Waiting for opponent...</h2>
@@ -39,11 +37,9 @@
         <button class="btn btn-leave" onclick="leaveRoom()">Leave Room</button>
     </div>
 
-    <!-- ====== GAME ====== -->
     <div id="game" class="hidden">
         <div id="roomCodeDisplay"></div>
 
-        <!-- Live player + online status bar -->
         <div id="playersBar" class="players-status"></div>
 
         <div id="status"></div>
@@ -71,12 +67,22 @@
 
             </div>
 
-            <!-- Rematch status text -->
             <div id="rematchInfo" class="rematch-info"></div>
 
             <div class="controls">
                 <button class="btn" id="rematchBtn" onclick="requestRematch()">New Game</button>
                 <button class="btn btn-leave" onclick="leaveRoom()">Leave Room</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modalOverlay" class="hidden">
+        <div id="modalBox">
+            <p id="modalMessage"></p>
+            <div class="controls modal-controls">
+                <button class="btn" id="modalOkBtn">OK</button>
+                <button class="btn btn-leave hidden" id="modalCancelBtn">Cancel</button>
+                <button class="btn hidden" id="modalYesBtn">Yes</button>
             </div>
         </div>
     </div>
