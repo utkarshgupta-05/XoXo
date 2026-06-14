@@ -428,8 +428,8 @@ function renderChats(chatsObj) {
     
     let messageContent = "";
     if (c.text.startsWith("data:audio/")) {
-      const blobUrl = getAudioUrl(c.text); // Convert it here!
-      messageContent = `<audio controls controlsList="nodownload noplaybackrate" src="${blobUrl}" class="chat-audio"></audio>`;
+      const blobUrl = getAudioUrl(c.text); 
+      messageContent = `<audio controls controlsList="nodownload noplaybackrate" preload="metadata" src="${blobUrl}" class="chat-audio" onloadedmetadata="this.currentTime=1e10; setTimeout(()=>this.currentTime=0, 50);"></audio>`;
     }else {
       messageContent = `<span class="msg-text">${escapeHtml(c.text)}</span>`;
     }
