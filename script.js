@@ -1,7 +1,7 @@
 // ============ FIREBASE SETUP ============
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
-  getDatabase, ref, set, onValue, update, get, remove, onDisconnect
+  getDatabase, ref, set, onValue, update, get, remove, onDisconnect, push
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
 const firebaseConfig = {
@@ -24,8 +24,10 @@ let clientId = null;      // Unique ID to handle turn swapping safely
 let gameActive = false;
 let roomListener = null;
 let lastData = null;
+let isChatOpen = false;
+let chatLength = 0;
 
-const INACTIVITY_MS = 1000 * 60 * 60; // 1 hour
+const INACTIVITY_MS = 1000 * 60 * 60 * 24 * 7; // 1 week inactivity timeout for rooms
 
 const WIN_PATTERNS = [
   [0,1,2],[3,4,5],[6,7,8],
@@ -156,13 +158,9 @@ window.submitName = function () {
   show("lobby");
 };
 
-// ============ EDIT NAME ============
 window.editName = function () {
-  // Pre-fill the input with their current name
   const input = document.getElementById("playerNameInput");
   input.value = myName || ""; 
-  
-  // Hide the lobby and show the name prompt
   hideAllScreens();
   show("namePrompt");
 };
@@ -220,6 +218,10 @@ window.joinRoom = async function () {
 // ============ ENTER / LISTEN ============
 function enterRoom() {
   hideAllScreens();
+  chatLength = 0;
+  isChatOpen = false;
+  document.getElementById("chatPanel").classList.add("closed");
+  show("chatFab"); // Reveal the chat button
 
   const onlineRef = ref(db, "rooms/" + roomId + "/online/" + mySymbol);
   set(onlineRef, true);
@@ -239,20 +241,26 @@ function enterRoom() {
     if (data.clients && data.clients[mySymbol] !== clientId) {
       const otherSymbol = mySymbol === "X" ? "O" : "X";
       if (data.clients[otherSymbol] === clientId) {
-        // Cancel old disconnect listener before swapping
         const oldRef = ref(db, "rooms/" + roomId + "/online/" + mySymbol);
         onDisconnect(oldRef).cancel();
         
         mySymbol = otherSymbol;
         saveSession();
         
-        // Re-establish online presence for new symbol
         const newRef = ref(db, "rooms/" + roomId + "/online/" + mySymbol);
         set(newRef, true);
         onDisconnect(newRef).set(false);
       }
     }
     // --------------------------------------------------------
+
+    // --- CHAT UPDATES ---
+    if (data.chats) {
+      renderChats(data.chats);
+    } else {
+      document.getElementById("chatMessages").innerHTML = "";
+      chatLength = 0;
+    }
 
     if (data.lastActivity && (Date.now() - data.lastActivity > INACTIVITY_MS)) {
       remove(ref(db, "rooms/" + roomId));
@@ -265,6 +273,63 @@ function enterRoom() {
       showGame(data);
     }
   });
+}
+
+// ============ CHAT SYSTEM ============
+window.toggleChat = function() {
+  const panel = document.getElementById("chatPanel");
+  isChatOpen = !isChatOpen;
+  
+  if (isChatOpen) {
+    panel.classList.remove("closed");
+    document.getElementById("chatBadge").classList.add("hidden");
+    scrollToChatBottom();
+  } else {
+    panel.classList.add("closed");
+  }
+};
+
+window.sendChatMessage = async function() {
+  const input = document.getElementById("chatInput");
+  const text = input.value.trim();
+  if (!text || !roomId || !mySymbol) return;
+
+  input.value = "";
+  const chatRef = ref(db, `rooms/${roomId}/chats`);
+  await push(chatRef, {
+    sender: mySymbol,
+    text: text,
+    timestamp: Date.now()
+  });
+  await update(ref(db, "rooms/" + roomId), { lastActivity: Date.now() });
+};
+
+window.handleChatKeyPress = function(e) {
+  if (e.key === 'Enter') sendChatMessage();
+};
+
+function renderChats(chatsObj) {
+  const chatBox = document.getElementById("chatMessages");
+  const chatValues = Object.values(chatsObj);
+
+  if (chatValues.length > chatLength) {
+    if (!isChatOpen) {
+      document.getElementById("chatBadge").classList.remove("hidden");
+    }
+  }
+  chatLength = chatValues.length;
+
+  chatBox.innerHTML = chatValues.map(c => {
+    const isMe = c.sender === mySymbol;
+    return `<div class="chat-msg ${isMe ? 'msg-me' : 'msg-them'}"><span class="msg-text">${escapeHtml(c.text)}</span></div>`;
+  }).join("");
+
+  if (isChatOpen) scrollToChatBottom();
+}
+
+function scrollToChatBottom() {
+  const chatBox = document.getElementById("chatMessages");
+  chatBox.scrollTop = chatBox.scrollHeight;
 }
 
 // ============ PLAYER STATUS BAR & SCOREBOARD ============
@@ -416,9 +481,9 @@ function renderRematch(data) {
       turn: "X", // X always goes first
       winner: "",
       rematch: { X: false, O: false },
-      names: { X: data.names.O, O: data.names.X },         // Swap Names
-      clients: { X: data.clients.O, O: data.clients.X },   // Swap Client IDs to switch player symbols
-      scores: { X: s.O, O: s.X, draws: s.draws },          // Swap Scores to track the player
+      names: { X: data.names.O, O: data.names.X },         
+      clients: { X: data.clients.O, O: data.clients.X },   
+      scores: { X: s.O, O: s.X, draws: s.draws },          
       lastActivity: Date.now()
     });
   }
@@ -463,7 +528,6 @@ window.handleClick = async function (el) {
     lastActivity: Date.now()
   };
 
-  // Update Scoreboard immediately on win/draw
   if (newWinner) {
     const s = data.scores || { X: 0, O: 0, draws: 0 };
     if (newWinner === "draw") s.draws++;
@@ -491,13 +555,20 @@ function goToLobby() {
   mySymbol = null;
   gameActive = false;
   lastData = null;
+  isChatOpen = false;
+  chatLength = 0;
+  
+  const panel = document.getElementById("chatPanel");
+  if (panel) panel.classList.add("closed");
+  
+  hide("chatFab"); // Hide chat button when returning to lobby
+  
   hideAllScreens();
   show("lobby");
 }
 
 // ============ INITIALIZATION ============
 async function init() {
-  // Generate a persistent Client ID for role-swapping logic
   clientId = localStorage.getItem("xoxo_clientId");
   if (!clientId) {
     clientId = Math.random().toString(36).substring(2, 9);

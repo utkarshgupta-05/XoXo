@@ -29,7 +29,7 @@ body {
     filter: drop-shadow(0px 5px 5px rgba(0, 0, 0, 0.5));
 }
 
-/* 2. Main Game Container - Fixed Centering Constraints */
+/* 2. Main Game Container */
 .container {
     background: rgba(255, 255, 255, 0.1);
     backdrop-filter: blur(10px);
@@ -40,8 +40,6 @@ body {
     border: 1px solid rgba(255, 255, 255, 0.1);
     text-align: center;
     transition: filter 0.5s ease, transform 0.5s ease;
-    
-    /* Flex rules to force all inner content to exact center */
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -58,7 +56,6 @@ body {
     align-content: center;
     gap: 15px;
     margin: 0 auto 24px auto;
-    /* Removed width: 100% so margin: 0 auto can properly center the grid block */
 }
 
 .row {
@@ -90,22 +87,9 @@ body {
     animation: popIn 0.3s forwards;
 }
 
-/* SVG marks inside cells */
-.mark-svg {
-    width: 100%;
-    height: 100%;
-    overflow: visible;
-}
-
-.heart-doodle {
-    filter: drop-shadow(0 0 8px rgba(255, 45, 85, 0.6));
-    transform: rotate(-5deg);
-}
-
-.circle-doodle {
-    filter: drop-shadow(0 0 8px rgba(45, 125, 255, 0.6));
-    transform: rotate(3deg);
-}
+.mark-svg { width: 100%; height: 100%; overflow: visible; }
+.heart-doodle { filter: drop-shadow(0 0 8px rgba(255, 45, 85, 0.6)); transform: rotate(-5deg); }
+.circle-doodle { filter: drop-shadow(0 0 8px rgba(45, 125, 255, 0.6)); transform: rotate(3deg); }
 
 /* 5. Buttons */
 .controls {
@@ -135,17 +119,10 @@ button:hover {
     background-position: right center;
 }
 
-button:active {
-    transform: translateY(-1px);
-}
+button:active { transform: translateY(-1px); }
 
-.btn {
-    background-image: linear-gradient(to right, #00d2ff 0%, #3a7bd5 51%, #00d2ff 100%);
-}
-
-.btn-leave {
-    background-image: linear-gradient(to right, #ff5858 0%, #f857a6 51%, #ff5858 100%);
-}
+.btn { background-image: linear-gradient(to right, #00d2ff 0%, #3a7bd5 51%, #00d2ff 100%); }
+.btn-leave { background-image: linear-gradient(to right, #ff5858 0%, #f857a6 51%, #ff5858 100%); }
 
 @keyframes popIn {
     from { transform: scale(0.5); opacity: 0; }
@@ -153,9 +130,7 @@ button:active {
 }
 
 /* ============ LOBBY / NAME / WAITING ============ */
-#lobby,
-#namePrompt,
-#waitingRoom {
+#lobby, #namePrompt, #waitingRoom {
     background: rgba(255, 255, 255, 0.1);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
@@ -167,242 +142,208 @@ button:active {
     max-width: 95%;
 }
 
-#lobby h2,
-#namePrompt h2,
-#waitingRoom h2 {
-    font-size: 2rem;
-    margin-bottom: 10px;
-}
-
+#lobby h2, #namePrompt h2, #waitingRoom h2 { font-size: 2rem; margin-bottom: 10px; }
 #lobby p { margin-bottom: 20px; opacity: 0.9; }
 
-#lobby input,
-#namePrompt input {
-    padding: 12px;
-    border-radius: 50px;
-    border: none;
-    font-size: 16px;
-    margin: 8px;
-    width: 180px;
-    text-align: center;
-    outline: none;
+#lobby input, #namePrompt input {
+    padding: 12px; border-radius: 50px; border: none; font-size: 16px;
+    margin: 8px; width: 180px; text-align: center; outline: none;
 }
 
-#roomCodeDisplay,
-#waitRoomCode {
-    font-size: 1.1rem;
-    margin-bottom: 10px;
-    padding: 8px 18px;
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 50px;
-    display: inline-block;
-}
-
-#status {
-    font-size: 1.3rem;
-    font-weight: 600;
-    margin: 12px 0 16px;
-}
-
-/* ============ EDIT NAME BUTTON ============ */
 .edit-name-btn {
-    background: none;
-    border: none;
-    color: #ffe9a8; /* Matches the gold/yellow used in rematch text */
-    cursor: pointer;
-    font-size: 0.9rem;
-    margin-left: 10px;
-    font-weight: bold;
-    text-decoration: underline;
-    transition: color 0.2s, transform 0.2s;
-    box-shadow: none;
-    padding: 0;
+    background: none; border: none; color: #ffe9a8; cursor: pointer;
+    font-size: 0.9rem; margin-left: 10px; font-weight: bold; text-decoration: underline;
+    transition: color 0.2s, transform 0.2s; box-shadow: none; padding: 0;
+}
+.edit-name-btn:hover { color: #ffffff; transform: translateY(-1px); box-shadow: none; background-image: none; }
+
+#roomCodeDisplay, #waitRoomCode {
+    font-size: 1.1rem; margin-bottom: 10px; padding: 8px 18px;
+    background: rgba(255, 255, 255, 0.1); border-radius: 50px; display: inline-block;
 }
 
-.edit-name-btn:hover {
-    color: #ffffff;
-    transform: translateY(-1px);
-    box-shadow: none;
-    background-image: none;
-}
+#status { font-size: 1.3rem; font-weight: 600; margin: 12px 0 16px; }
 
-/* ============ PLAYER STATUS BAR (avatars & score) ============ */
+/* ============ PLAYER STATUS BAR (Now fixed horizontally) ============ */
 .players-status {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 18px;
-    flex-wrap: wrap;
+    gap: 10px;
+    flex-wrap: nowrap; /* FORCED HORIZONTAL */
     margin: 10px auto 6px;
     background: rgba(255, 255, 255, 0.08);
-    padding: 12px 18px;
+    padding: 12px 10px;
     border-radius: 20px;
-    max-width: 95%;
+    max-width: 100%;
 }
 
 .player-card {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 6px 10px;
-    border-radius: 16px;
-    transition: opacity 0.3s ease;
+    display: flex; align-items: center; gap: 10px; padding: 6px 10px;
+    border-radius: 16px; transition: opacity 0.3s ease;
 }
 
 .player-card.is-offline { opacity: 0.55; }
-
-.avatar-wrap {
-    position: relative;
-    width: 54px;
-    height: 54px;
-    flex-shrink: 0;
-}
-
+.avatar-wrap { position: relative; width: 54px; height: 54px; flex-shrink: 0; }
 .avatar-svg { width: 100%; height: 100%; }
 
 .status-dot {
-    position: absolute;
-    bottom: 2px;
-    right: 2px;
-    width: 14px;
-    height: 14px;
-    border-radius: 50%;
-    border: 2px solid #2b1b4d;
+    position: absolute; bottom: 2px; right: 2px; width: 14px; height: 14px;
+    border-radius: 50%; border: 2px solid #2b1b4d;
 }
 .dot-online  { background: #22c55e; box-shadow: 0 0 8px #22c55e; }
 .dot-offline { background: #9ca3af; }
 
 .player-meta { text-align: left; }
-.player-name { font-weight: 700; font-size: 1rem; }
+.player-name { 
+    font-weight: 700; 
+    font-size: 1rem; 
+    white-space: nowrap; 
+    overflow: hidden; 
+    text-overflow: ellipsis; 
+    max-width: 120px; /* Prevents long names from breaking layout */
+}
 
-/* Scoreboard Text Styles */
 .player-score { font-size: 0.85rem; color: #ffe9a8; font-weight: 600; margin-top: 2px; }
 .draws-text { font-size: 0.8rem; font-weight: normal; color: #e5e7eb; }
 
-.player-mark {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 0.8rem;
-    opacity: 0.85;
-}
+.player-mark { display: flex; align-items: center; gap: 6px; font-size: 0.8rem; opacity: 0.85; }
 .player-mark .mark-svg { width: 18px; height: 18px; }
 
-.vs-label {
-    font-weight: 900;
-    font-size: 1.1rem;
-    opacity: 0.8;
-}
+.vs-label { font-weight: 900; font-size: 1.1rem; opacity: 0.8; }
 
-/* ============ REMATCH INFO ============ */
-.rematch-info {
-    width: 100%;
-    min-height: 22px;
-    margin-bottom: 12px;
-    font-size: 0.95rem;
-    font-weight: 600;
-    color: #ffe9a8;
-}
-
+.rematch-info { width: 100%; min-height: 22px; margin-bottom: 12px; font-size: 0.95rem; font-weight: 600; color: #ffe9a8; }
 .hidden { display: none !important; }
 
 /* ============ CUSTOM MODAL OVERLAY ============ */
 #modalOverlay {
+    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+    background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px);
+    display: flex; justify-content: center; align-items: center; z-index: 1000; opacity: 1; transition: opacity 0.3s ease;
+}
+#modalOverlay.hidden { opacity: 0; pointer-events: none; }
+
+#modalBox {
+    background: rgba(255, 255, 255, 0.15); border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 30px; border-radius: 25px; box-shadow: 0 25px 45px rgba(0, 0, 0, 0.3);
+    text-align: center; max-width: 400px; width: 90%; transform: scale(1);
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+#modalOverlay.hidden #modalBox { transform: scale(0.8); }
+#modalMessage { font-size: 1.2rem; margin-bottom: 25px; font-weight: 600; line-height: 1.5; }
+.modal-controls { margin-top: 10px; }
+
+
+/* ============ FLOATING CHAT BUTTON (FAB) ============ */
+.chat-fab {
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background: rgba(0, 0, 0, 0.6);
-    backdrop-filter: blur(5px);
-    -webkit-backdrop-filter: blur(5px);
+    bottom: 25px;
+    right: 25px;
+    width: 65px;
+    height: 65px;
+    border-radius: 50%;
+    background-image: linear-gradient(to right, #00d2ff 0%, #3a7bd5 100%);
+    border: none;
+    color: white;
+    font-size: 1.8rem;
+    cursor: pointer;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    z-index: 900;
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 1000;
-    opacity: 1;
-    transition: opacity 0.3s ease;
+    transition: transform 0.2s, box-shadow 0.2s;
 }
 
-#modalOverlay.hidden {
+.chat-fab:hover {
+    transform: scale(1.08);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+}
+
+.chat-fab .chat-badge {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+}
+
+
+/* ============ CHAT PANEL ============ */
+#chatPanel {
+    position: fixed;
+    bottom: 105px; /* Sits directly above the new chat FAB */
+    right: 25px;
+    width: 320px;
+    height: 450px;
+    background: rgba(20, 10, 40, 0.85);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 20px;
+    display: flex;
+    flex-direction: column;
+    z-index: 500;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s ease;
+    overflow: hidden; /* FIXES THE CORNER BLEED ISSUE */
+}
+
+#chatPanel.closed {
     opacity: 0;
     pointer-events: none;
+    transform: translateY(50px) scale(0.95);
 }
 
-#modalBox {
-    background: rgba(255, 255, 255, 0.15);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    padding: 30px;
-    border-radius: 25px;
-    box-shadow: 0 25px 45px rgba(0, 0, 0, 0.3);
-    text-align: center;
-    max-width: 400px;
-    width: 90%;
-    transform: scale(1);
-    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+.chat-header {
+    display: flex; justify-content: space-between; align-items: center; padding: 15px 20px;
+    background: rgba(255, 255, 255, 0.1); border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-#modalOverlay.hidden #modalBox {
-    transform: scale(0.8);
-}
-
-#modalMessage {
-    font-size: 1.2rem;
-    margin-bottom: 25px;
-    font-weight: 600;
-    line-height: 1.5;
-}
-
-.modal-controls {
-    margin-top: 10px;
-}
+.chat-header h3 { font-size: 1.1rem; margin: 0; }
+.close-chat { background: none; border: none; color: white; font-size: 1.2rem; cursor: pointer; padding: 0 !important; box-shadow: none; width: auto !important; margin: 0; }
+.close-chat:hover { background: none; box-shadow: none; transform: scale(1.1); }
+.chat-messages { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+.chat-msg { max-width: 85%; padding: 10px 15px; border-radius: 18px; font-size: 0.9rem; word-wrap: break-word; animation: popIn 0.2s forwards; }
+.msg-me { align-self: flex-end; background: linear-gradient(to right, #00d2ff, #3a7bd5); border-bottom-right-radius: 4px; }
+.msg-them { align-self: flex-start; background: rgba(255, 255, 255, 0.15); border-bottom-left-radius: 4px; }
+.chat-input-area { display: flex; padding: 15px; gap: 10px; background: rgba(255, 255, 255, 0.05); border-top: 1px solid rgba(255, 255, 255, 0.1); }
+#chatInput { flex: 1; padding: 10px 15px; border-radius: 50px; border: none; outline: none; font-size: 0.9rem; text-align: left; width: 100%; margin: 0; background: rgba(255, 255, 255, 0.9); color: #333; }
+.chat-send-btn { padding: 0 15px !important; width: auto !important; border-radius: 50px !important; display: flex; justify-content: center; align-items: center; margin: 0; }
+.chat-badge { display: inline-block; width: 12px; height: 12px; background: #ff2d55; border-radius: 50%; box-shadow: 0 0 8px #ff2d55; }
 
 /* ============ RESPONSIVENESS ============ */
 
-/* Tablets / large phones: covers 351–600 smoothly */
 @media (max-width: 600px) {
     .main-title { font-size: 4rem; letter-spacing: 2px; margin-top: 10px; }
-
-    .container,
-    #lobby,
-    #namePrompt,
-    #waitingRoom {
-        padding: 25px 15px;
-        width: 95%; /* Better fit for mobile margins */
-    }
-
-    /* Fixed grid centering */
-    .grid { 
-        grid-template-columns: repeat(3, minmax(60px, 80px)); 
-        justify-content: center;
-        gap: 10px; 
-        margin: 0 auto 20px auto; 
-    }
-
-    .col {
-        border-radius: 10px;
-        padding: 8px;
-    }
-
+    .container, #lobby, #namePrompt, #waitingRoom { padding: 25px 15px; width: 95%; }
+    
+    .grid { grid-template-columns: repeat(3, minmax(60px, 80px)); justify-content: center; gap: 10px; margin: 0 auto 20px auto; }
+    .col { border-radius: 10px; padding: 8px; }
     .controls { flex-direction: column; width: 100%; }
 
-    button { width: 100%; padding: 15px; }
+    /* Override mobile button styles for chat components to protect layout */
+    button:not(.close-chat):not(.chat-send-btn):not(.chat-fab) { width: 100%; padding: 15px; }
 
-    #lobby input,
-    #namePrompt input { width: 100%; margin: 8px 0; }
+    #lobby input, #namePrompt input { width: 100%; margin: 8px 0; }
 
-    .players-status { gap: 10px; padding: 10px; }
+    .players-status { gap: 5px; padding: 10px 5px; }
     .avatar-wrap { width: 46px; height: 46px; }
-    .player-name { font-size: 0.9rem; }
+    .player-name { font-size: 0.85rem; max-width: 80px; }
+    .vs-label { font-size: 0.9rem; }
+    
+    .chat-fab { bottom: 15px; right: 15px; width: 55px; height: 55px; font-size: 1.5rem; z-index: 1100; }
+    
+    #chatPanel {
+        bottom: 0; right: 0; width: 100%; height: 70vh;
+        border-radius: 20px 20px 0 0;
+        z-index: 1200; /* Covers the FAB when open on mobile */
+    }
 }
 
-/* Medium phones 351–480 fine-tune */
 @media (max-width: 480px) {
     .main-title { font-size: 3.4rem; }
     .vs-label { font-size: 0.95rem; }
 }
 
-/* Small devices */
 @media (max-width: 350px) {
     .main-title { font-size: 2.8rem; }
     .grid { grid-template-columns: repeat(3, minmax(50px, 70px)); }

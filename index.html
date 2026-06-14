@@ -19,7 +19,7 @@
     </div>
 
     <div id="lobby" class="hidden">
-        <h2>XoXo</h2>
+        <h2>XoXo Online</h2>
         
         <div style="margin-bottom: 20px;">
             <span id="lobbyGreeting" style="opacity: 0.9;">Create a new game or join your friend's room</span>
@@ -77,6 +77,23 @@
                 <button class="btn" id="rematchBtn" onclick="requestRematch()">New Game</button>
                 <button class="btn btn-leave" onclick="leaveRoom()">Leave Room</button>
             </div>
+        </div>
+    </div>
+
+    <button id="chatFab" class="chat-fab hidden" onclick="toggleChat()">
+        💬
+        <span id="chatBadge" class="chat-badge hidden"></span>
+    </button>
+
+    <div id="chatPanel" class="closed">
+        <div class="chat-header">
+            <h3>Room Chat</h3>
+            <button class="close-chat" onclick="toggleChat()">✖</button>
+        </div>
+        <div id="chatMessages" class="chat-messages"></div>
+        <div class="chat-input-area">
+            <input type="text" id="chatInput" placeholder="Type a message..." maxlength="100" autocomplete="off" onkeypress="handleChatKeyPress(event)" />
+            <button class="btn chat-send-btn" onclick="sendChatMessage()">➤</button>
         </div>
     </div>
 
