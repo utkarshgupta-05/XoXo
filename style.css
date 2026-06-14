@@ -263,8 +263,21 @@ button:active { transform: translateY(-1px); }
 
 .chat-fab .chat-badge {
     position: absolute;
-    top: 12px;
-    right: 12px;
+    top: 0px;
+    right: 0px;
+    width: 16px;
+    height: 16px;
+    background-color: #ff2d55;
+    border-radius: 50%;
+    border: 2px solid white;
+    z-index: 10;
+    pointer-events: none;
+    transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.chat-fab .chat-badge.hidden {
+    transform: scale(0);
+    opacity: 0;
 }
 
 
@@ -350,7 +363,7 @@ button:active { transform: translateY(-1px); }
     margin: 0; background: rgba(255, 255, 255, 0.9); color: #333; 
 }
 
-/* WhatsApp-Style Action Button Wrapper */
+/* Action Button Wrapper */
 .chat-action-wrapper {
     position: relative;
     width: 44px;

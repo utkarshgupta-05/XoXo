@@ -303,6 +303,7 @@ function enterRoom() {
       chatLength = 0;
     }
 
+    // TRIGGER 2: Wipes the room if inactive for 24 hours
     if (data.lastActivity && (Date.now() - data.lastActivity > INACTIVITY_MS)) {
       remove(ref(db, "rooms/" + roomId));
       return;
@@ -323,6 +324,7 @@ window.toggleChat = function () {
 
   if (isChatOpen) {
     panel.classList.remove("closed");
+    // Hides the red dot when opening the chat
     document.getElementById("chatBadge").classList.add("hidden");
     scrollToChatBottom();
   } else {
@@ -392,11 +394,9 @@ window.toggleRecording = async function () {
 const audioBlobCache = {};
 
 function getAudioUrl(dataURI) {
-  // If we already converted this audio, just return the cached URL
   if (audioBlobCache[dataURI]) return audioBlobCache[dataURI];
 
   try {
-    // Convert Base64 string back into a real Blob file
     const byteString = atob(dataURI.split(',')[1]);
     const mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0];
     const ab = new ArrayBuffer(byteString.length);
@@ -407,10 +407,10 @@ function getAudioUrl(dataURI) {
     const blob = new Blob([ab], { type: mimeString });
     const url = URL.createObjectURL(blob);
 
-    audioBlobCache[dataURI] = url; // Save it
+    audioBlobCache[dataURI] = url; 
     return url;
   } catch (e) {
-    return dataURI; // Fallback just in case
+    return dataURI; 
   }
 }
 
@@ -418,6 +418,7 @@ function renderChats(chatsObj) {
   const chatBox = document.getElementById("chatMessages");
   const chatValues = Object.values(chatsObj);
 
+  // RED DOT LOGIC: Shows the badge if there are new messages and chat is closed
   if (chatValues.length > chatLength && !isChatOpen) {
     document.getElementById("chatBadge").classList.remove("hidden");
   }
@@ -656,7 +657,10 @@ window.leaveRoom = async function () {
   if (!roomId) { goToLobby(); return; }
   const confirmLeave = await showModal("Leave this room? The room will be closed for both players.", "confirm");
   if (!confirmLeave) return;
+  
+  // TRIGGER 1: Immediately wipe the room when the "Leave Room" button is clicked
   await remove(ref(db, "rooms/" + roomId));
+  
   goToLobby();
 };
 
