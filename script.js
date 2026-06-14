@@ -35,43 +35,43 @@ let isRecording = false;
 const INACTIVITY_MS = 1000 * 60 * 60 * 24; // 24 hours
 
 const WIN_PATTERNS = [
-  [0,1,2],[3,4,5],[6,7,8],
-  [0,3,6],[1,4,7],[2,5,8],
-  [0,4,8],[2,4,6]
+  [0, 1, 2], [3, 4, 5], [6, 7, 8],
+  [0, 3, 6], [1, 4, 7], [2, 5, 8],
+  [0, 4, 8], [2, 4, 6]
 ];
 
 // ============ GLOBAL AUDIO CONTROLLER ============
 // Forces only ONE audio to play at a time and forces volume to 90%
-document.addEventListener('play', function(e){
-  if(e.target.tagName === 'AUDIO'){
-      e.target.volume = 0.9;
-      const audios = document.getElementsByTagName('audio');
-      for(let i = 0; i < audios.length; i++){
-          if(audios[i] !== e.target){
-              audios[i].pause();
-          }
+document.addEventListener('play', function (e) {
+  if (e.target.tagName === 'AUDIO') {
+    e.target.volume = 0.9;
+    const audios = document.getElementsByTagName('audio');
+    for (let i = 0; i < audios.length; i++) {
+      if (audios[i] !== e.target) {
+        audios[i].pause();
       }
+    }
   }
 }, true);
 
 // ============ KEYBOARD LISTENERS ============
-window.handleNameKeyPress = function(e) {
+window.handleNameKeyPress = function (e) {
   if (e.key === 'Enter') submitName();
 };
 
-window.handleJoinKeyPress = function(e) {
+window.handleJoinKeyPress = function (e) {
   if (e.key === 'Enter') joinRoom();
 };
 
-window.handleChatKeyPress = function(e) {
+window.handleChatKeyPress = function (e) {
   if (e.key === 'Enter') sendChatMessage();
 };
 
-window.handleChatInput = function() {
+window.handleChatInput = function () {
   const input = document.getElementById("chatInput");
   const micBtn = document.getElementById("micBtn");
   const sendBtn = document.getElementById("sendBtn");
-  
+
   if (input.value.trim().length > 0) {
     micBtn.classList.add("hidden");
     sendBtn.classList.remove("hidden");
@@ -204,7 +204,7 @@ window.submitName = function () {
 
 window.editName = function () {
   const input = document.getElementById("playerNameInput");
-  input.value = myName || ""; 
+  input.value = myName || "";
   hideAllScreens();
   show("namePrompt");
 };
@@ -286,10 +286,10 @@ function enterRoom() {
       if (data.clients[otherSymbol] === clientId) {
         const oldRef = ref(db, "rooms/" + roomId + "/online/" + mySymbol);
         onDisconnect(oldRef).cancel();
-        
+
         mySymbol = otherSymbol;
         saveSession();
-        
+
         const newRef = ref(db, "rooms/" + roomId + "/online/" + mySymbol);
         set(newRef, true);
         onDisconnect(newRef).set(false);
@@ -317,10 +317,10 @@ function enterRoom() {
 }
 
 // ============ CHAT & AUDIO SYSTEM ============
-window.toggleChat = function() {
+window.toggleChat = function () {
   const panel = document.getElementById("chatPanel");
   isChatOpen = !isChatOpen;
-  
+
   if (isChatOpen) {
     panel.classList.remove("closed");
     document.getElementById("chatBadge").classList.add("hidden");
@@ -330,16 +330,16 @@ window.toggleChat = function() {
   }
 };
 
-window.sendChatMessage = async function(textOverride = null) {
+window.sendChatMessage = async function (textOverride = null) {
   const input = document.getElementById("chatInput");
   const text = textOverride || input.value.trim();
   if (!text || !roomId || !mySymbol) return;
 
-  if(!textOverride) {
+  if (!textOverride) {
     input.value = "";
     handleChatInput(); // Reset the buttons back to Mic
   }
-  
+
   const chatRef = ref(db, `rooms/${roomId}/chats`);
   await push(chatRef, {
     sender: mySymbol,
@@ -349,19 +349,19 @@ window.sendChatMessage = async function(textOverride = null) {
   await update(ref(db, "rooms/" + roomId), { lastActivity: Date.now() });
 };
 
-window.toggleRecording = async function() {
+window.toggleRecording = async function () {
   const micBtn = document.getElementById("micBtn");
-  
+
   if (!isRecording) {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       mediaRecorder = new MediaRecorder(stream);
       audioChunks = [];
-      
+
       mediaRecorder.ondataavailable = e => {
         if (e.data.size > 0) audioChunks.push(e.data);
       };
-      
+
       mediaRecorder.onstop = () => {
         const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
         const reader = new FileReader();
@@ -376,7 +376,7 @@ window.toggleRecording = async function() {
       mediaRecorder.start();
       isRecording = true;
       micBtn.classList.add("recording");
-      
+
     } catch (err) {
       showModal("Microphone access denied or not available.");
     }
@@ -389,7 +389,7 @@ window.toggleRecording = async function() {
   }
 };
 
-const audioBlobCache = {}; 
+const audioBlobCache = {};
 
 function getAudioUrl(dataURI) {
   // If we already converted this audio, just return the cached URL
@@ -406,7 +406,7 @@ function getAudioUrl(dataURI) {
     }
     const blob = new Blob([ab], { type: mimeString });
     const url = URL.createObjectURL(blob);
-    
+
     audioBlobCache[dataURI] = url; // Save it
     return url;
   } catch (e) {
@@ -425,12 +425,12 @@ function renderChats(chatsObj) {
 
   chatBox.innerHTML = chatValues.map(c => {
     const isMe = c.sender === mySymbol;
-    
+
     let messageContent = "";
     if (c.text.startsWith("data:audio/")) {
-      const blobUrl = getAudioUrl(c.text); 
-      messageContent = `<audio controls controlsList="nodownload noplaybackrate" preload="metadata" src="${blobUrl}" class="chat-audio" onloadedmetadata="this.currentTime=1e10; setTimeout(()=>this.currentTime=0, 50);"></audio>`;
-    }else {
+      const blobUrl = getAudioUrl(c.text);
+      messageContent = `<audio controls controlsList="nodownload noplaybackrate" src="${blobUrl}" class="chat-audio"></audio>`;
+    } else {
       messageContent = `<span class="msg-text">${escapeHtml(c.text)}</span>`;
     }
 
@@ -452,7 +452,7 @@ function buildPlayerCard(symbol, data) {
   const score = data.scores ? data.scores[symbol] : 0;
   const mark = symbol === "X" ? heartSVG() : circleSVG();
   const youTag = symbol === mySymbol ? " (You)" : "";
-  
+
   return `
     <div class="player-card ${online ? "is-online" : "is-offline"}">
       <div class="avatar-wrap">
@@ -590,12 +590,12 @@ function renderRematch(data) {
     const s = data.scores || { X: 0, O: 0, draws: 0 };
     update(ref(db, "rooms/" + roomId), {
       board: Array(9).fill(""),
-      turn: "X", 
+      turn: "X",
       winner: "",
       rematch: { X: false, O: false },
-      names: { X: data.names.O, O: data.names.X },         
-      clients: { X: data.clients.O, O: data.clients.X },   
-      scores: { X: s.O, O: s.X, draws: s.draws },          
+      names: { X: data.names.O, O: data.names.X },
+      clients: { X: data.clients.O, O: data.clients.X },
+      scores: { X: s.O, O: s.X, draws: s.draws },
       lastActivity: Date.now()
     });
   }
@@ -669,17 +669,17 @@ function goToLobby() {
   lastData = null;
   isChatOpen = false;
   chatLength = 0;
-  
+
   if (mediaRecorder && mediaRecorder.state !== "inactive") {
-      mediaRecorder.stop();
+    mediaRecorder.stop();
   }
   isRecording = false;
-  
+
   const panel = document.getElementById("chatPanel");
   if (panel) panel.classList.add("closed");
-  
+
   hide("chatFab");
-  
+
   hideAllScreens();
   show("lobby");
 }
