@@ -1,86 +1,376 @@
-**Tic-Tac-Toe (XOXO)**
+# 🎮 XOXO — Real-Time Multiplayer Tic-Tac-Toe
 
-A modern, interactive, and responsive Tic-Tac-Toe game built using HTML, CSS, and JavaScript.
-The project features a sleek UI, animated gameplay, turn-selection controls, and a polished result overlay.
+A modern, real-time multiplayer Tic-Tac-Toe game with room-based matchmaking, in-game chat, live online status, and a beautiful glass-morphism UI — all powered by **Firebase Realtime Database**.
 
-<img width="2879" height="1433" alt="Screenshot 2025-12-12 175129" src="https://github.com/user-attachments/assets/52faf781-9333-4b84-9fe1-306c2d475bb5" />
+> **🎮 Play Now:** https://mgautam-88.github.io/XoXo/
 
-Play Now https://mgautam-88.github.io/XoXo/
+> **📂 GitHub Repository:** https://github.com/MGautam-88/XoXo
 
-____________________________
+<!-- Replace with your own screenshot -->
+![XOXO Game Screenshot](https://via.placeholder.com/1200x600?text=XOXO+Game+Screenshot+-+Replace+With+Actual+Screenshot)
 
-**Features:**
-1. Player Turn Selection
+---
 
-A toggle button lets players choose:
+# 📋 Table of Contents
 
-P1: X / P2: O, or
+- [Overview](#-overview)
+- [Features](#-features)
+- [How to Play](#-how-to-play)
+- [Technologies Used](#-technologies-used)
+- [Project Structure](#-project-structure)
+- [How the Application Works](#-how-the-application-works-end-to-end)
+- [Setup & Deployment](#-setup--deployment)
+- [Contributing](#-contributing)
+- [License](#-license)
+- [Author](#-author)
 
-P1: O / P2: X
+---
 
-Once the game begins, the selection locks automatically.
+# 🧠 Overview
 
-2. Smooth Gameplay
+**XOXO** is not your ordinary Tic-Tac-Toe. It's a fully online, real-time, two-player game where friends can create private rooms, choose who goes first, chat during the match, and track scores across multiple rounds—all from their browsers with zero installation.
 
-Players take turns placing X or O.
+---
 
-Cells animate when filled.
+# ✨ Features
 
-Prevents overwriting already-selected cells.
+## 🏠 Room-Based Multiplayer
 
-3. Win & Draw Detection
+- Create a private room with a unique **6-character room code**
+- Join an existing room instantly using your friend's code
+- Maximum **2 players per room**
+- Fast Firebase-powered matchmaking
 
-All 8 win patterns are checked dynamically.
+<!-- Replace with actual screenshot -->
+![Room System](https://via.placeholder.com/800x400?text=Room+Creation+%26+Join+Screenshot)
 
-Clean result detection:
+---
 
-Displays Winner with animation.
+## 👤 Player Name Entry
 
-Displays Draw when board is full.
+- Every player enters their name before joining
+- Fresh name prompt every new session
+- Names appear throughout the game, chat, and scoreboard
 
-4. Attractive UI
+<!-- Replace with actual screenshot -->
+![Name Entry](https://via.placeholder.com/800x400?text=Name+Entry+Screenshot)
 
-Glass-morphism board style.
+---
 
-Neon-glow symbols for X and O.
+## 🎲 "Who Goes First" Chooser
 
-Smooth hover and pop-in animations.
+Before every round, players decide who gets the first move.
 
-Responsive layout for all screen sizes.
+Options include:
 
-5. Result Overlay
+- Select Player 1
+- Select Player 2
+- 🎲 Random selection with a suspense animation
 
-Beautiful animated overlay shows the winner.
+Assignments:
 
-“Play Again” button restarts the game instantly.
+- 🔵 First player → Circle (O)
+- ❤️ Second player → Heart (X)
 
-6. New Game Button
+<!-- Replace with actual screenshot -->
+![First Chooser](https://via.placeholder.com/800x400?text=Who+Goes+First+Chooser+Screenshot)
 
-Players can reset the board at any time.
-_________________________________
+---
 
-**Technologies Used**
+## ❤️ Hand-Drawn SVG Doodles
 
-HTML5 — game structure
+Instead of traditional X and O:
 
-CSS3 — animations, responsiveness, modern UI
+- ❤️ Hand-drawn red heart
+- 🔵 Sketch-style blue circle
+- Inline SVG graphics
+- Sharp rendering on every screen size
 
-JavaScript (Vanilla) — game logic, event handling, win-check logic
-_________________________
+<!-- Replace with actual screenshot -->
+![SVG Doodles](https://via.placeholder.com/800x400?text=Heart+%26+Circle+SVG+Doodles+Screenshot)
 
-**How to Play**
+---
 
-Choose who starts using the toggle button.
+## 👥 Live Online/Offline Status
 
-Tap on any empty cell to place your symbol.
+Each player has a Bitmoji-style SVG avatar.
 
-First player to complete a row, column, or diagonal wins.
+### Online
 
-If the board fills with no winner, game ends in a draw.
+- 🟢 Green ring
+- 😊 Smiling face
+- Blue shirt
+- Green glowing status
 
-Use New Game or Play Again to restart.
+### Offline
 
-Live Demo:
-https://mgautam-88.github.io/XoXo/
+- ⚫ Grey ring
+- 😐 Neutral face
+- Grey shirt
+- Dimmed player card
 
-_____________
+Presence updates happen instantly through Firebase.
+
+<!-- Replace with actual screenshot -->
+![Online Status](https://via.placeholder.com/800x400?text=Bitmoji+Avatars+Online+Offline+Screenshot)
+
+---
+
+## 🏆 Persistent Scoreboard
+
+Keeps track of:
+
+- Player 1 Wins
+- Player 2 Wins
+- Draws
+
+Scores persist across every rematch until the room is destroyed.
+
+<!-- Replace with actual screenshot -->
+![Scoreboard](https://via.placeholder.com/800x400?text=Scoreboard+Screenshot)
+
+---
+
+## 🔄 Rematch System
+
+After every match:
+
+- One player requests a rematch
+- Opponent accepts
+- Request can also be cancelled
+- New round starts only after both players agree
+- First-player chooser appears again
+
+<!-- Replace with actual screenshot -->
+![Rematch Flow](https://via.placeholder.com/800x400?text=Rematch+Request+Flow+Screenshot)
+
+---
+
+## 💬 In-Game Chat
+
+A floating chat widget allows players to:
+
+- Chat in real time
+- Receive instant messages
+- View unread message badge
+- Keep chat history throughout the room session
+
+<!-- Replace with actual screenshot -->
+![Chat Widget](https://via.placeholder.com/800x400?text=Chat+Widget+Screenshot)
+
+---
+
+## 🔒 Session Persistence
+
+- Auto reconnect after refresh
+- Hard refresh supported
+- Session stored using LocalStorage
+- Firebase Presence tracks online/offline state
+- Rooms automatically delete after **1 hour of inactivity**
+- Manual Leave Room destroys the room immediately
+
+---
+
+## 📱 Fully Responsive
+
+Optimized for:
+
+- 💻 Desktop
+- 📱 Mobile
+- 📟 Tablet
+
+Responsive breakpoints:
+
+- 600px
+- 480px
+- 350px
+
+Features:
+
+- Centered game board
+- Glass-morphism UI
+- Smooth animations
+- Neon effects
+- Mobile-friendly controls
+
+<!-- Replace with actual screenshot -->
+![Responsive Design](https://via.placeholder.com/800x400?text=Responsive+Design+Mobile+%26+Desktop+Screenshot)
+
+---
+
+# 🕹️ How to Play
+
+1. Open the game.
+2. Enter your name.
+3. Create a room or join one using a room code.
+4. Wait for your opponent.
+5. Decide who goes first.
+6. Play by selecting empty cells.
+7. Get three in a row to win.
+8. Request a rematch after the game.
+9. Chat anytime using the floating chat button.
+10. Leave the room whenever you want.
+
+---
+
+# 🛠️ Technologies Used
+
+| Technology | Purpose |
+|------------|---------|
+| HTML5 | Structure |
+| CSS3 | Styling, animations, responsive UI |
+| Vanilla JavaScript (ES6+) | Game logic |
+| Firebase Realtime Database | Multiplayer synchronization |
+| Firebase JS SDK v10 | Firebase integration |
+| SVG | Hearts, circles, avatars |
+| LocalStorage | Session persistence |
+| GitHub Pages | Hosting |
+
+---
+
+# 📁 Project Structure
+
+```text
+XoXo/
+│
+├── index.html      # Main UI
+├── style.css       # Styling & responsive layout
+├── script.js       # Multiplayer game logic
+├── icon.png        # Favicon
+└── README.md       # Documentation
+```
+
+---
+
+# 🧠 How the Application Works (End to End)
+
+1. Player opens the application and enters their **name**.
+2. They either **create a room** (receiving a unique 6-character room code) or **join** an existing room using a friend's code.
+3. Both players enter a waiting room where live Bitmoji-style avatars display their online/offline status.
+4. Once both players are connected, they enter the game screen where either player can choose who moves first or use the **🎲 Random** option.
+5. The player going first becomes **🔵 Circle (O)**, while the second player becomes **❤️ Heart (X)**.
+6. Every move is synchronized instantly through **Firebase Realtime Database**.
+7. After a win or draw, the persistent scoreboard updates automatically.
+8. To begin another round, both players must agree to a rematch.
+9. Players can send messages anytime through the built-in real-time chat widget.
+10. Refreshing the page automatically reconnects players to their room using LocalStorage.
+11. Firebase Presence keeps track of online/offline status.
+12. Rooms remain available for up to **1 hour of inactivity**, after which they are automatically removed.
+
+---
+
+# 🚀 Setup & Deployment
+
+## Run Locally
+
+Clone the repository:
+
+```bash
+git clone https://github.com/MGautam-88/XoXo.git
+```
+
+Go into the project directory:
+
+```bash
+cd XoXo
+```
+
+Open **index.html** in any modern browser.
+
+No installation.
+
+No npm.
+
+No build tools.
+
+The application uses Firebase via CDN, so an internet connection is required for multiplayer functionality.
+
+---
+
+## Deploy to GitHub Pages
+
+1. Push your project to GitHub.
+2. Open **Repository Settings**.
+3. Navigate to **Pages**.
+4. Select:
+
+```
+Deploy from Branch
+```
+
+5. Choose:
+
+```
+main
+/
+root
+```
+
+6. Save.
+
+Your website will become available at:
+
+```
+https://<username>.github.io/XoXo/
+```
+
+### Cache Tip
+
+GitHub Pages may take **2–5 minutes** to publish updates.
+
+If changes don't appear:
+
+- Hard refresh (`Ctrl + Shift + R`)
+- Or append:
+
+```
+?v=1
+```
+
+to the URL.
+
+---
+
+# 🤝 Contributing
+
+Contributions are welcome!
+
+1. Fork the repository.
+2. Create your feature branch.
+
+```bash
+git checkout -b feature/amazing-feature
+```
+
+3. Commit your changes.
+
+```bash
+git commit -m "Add amazing feature"
+```
+
+4. Push the branch.
+
+```bash
+git push origin feature/amazing-feature
+```
+
+5. Open a Pull Request.
+
+---
+
+# 📄 License
+
+This project is open source and intended for personal, educational, and learning purposes.
+
+---
+
+# 👨‍💻 Author
+
+**MGautam-88**
+
+GitHub:
+https://github.com/MGautam-88
+
+---
+
+⭐ If you enjoyed this project, consider giving it a **star** on GitHub!
