@@ -2,7 +2,7 @@
 
 A modern, real-time multiplayer Tic-Tac-Toe game with room-based matchmaking, in-game chat, live online status, and a beautiful glass-morphism UI — all powered by **Firebase Realtime Database**.
 
-> **🎮 Play Now:** https://mgautam-88.github.io/XoXo/
+> **🎮 Play Now:** https://gmxo.games/
 
 > **📂 GitHub Repository:** https://github.com/MGautam-88/XoXo
 
