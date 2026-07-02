@@ -6,8 +6,7 @@ A modern, real-time multiplayer Tic-Tac-Toe game with room-based matchmaking, in
 
 > **📂 GitHub Repository:** https://github.com/MGautam-88/XoXo
 
-<!-- Replace with your own screenshot -->
-![XOXO Game Screenshot](https://via.placeholder.com/1200x600?text=XOXO+Game+Screenshot+-+Replace+With+Actual+Screenshot)
+![XOXO Game Screenshot](assets/XOXO_game.png)
 
 ---
 
@@ -41,8 +40,7 @@ A modern, real-time multiplayer Tic-Tac-Toe game with room-based matchmaking, in
 - Maximum **2 players per room**
 - Fast Firebase-powered matchmaking
 
-<!-- Replace with actual screenshot -->
-![Room System](https://via.placeholder.com/800x400?text=Room+Creation+%26+Join+Screenshot)
+![Room System](assets/room_system.png)
 
 ---
 
@@ -52,8 +50,7 @@ A modern, real-time multiplayer Tic-Tac-Toe game with room-based matchmaking, in
 - Fresh name prompt every new session
 - Names appear throughout the game, chat, and scoreboard
 
-<!-- Replace with actual screenshot -->
-![Name Entry](https://via.placeholder.com/800x400?text=Name+Entry+Screenshot)
+![Name Entry](assets/player_name_entry.png)
 
 ---
 
@@ -86,8 +83,7 @@ Instead of traditional X and O:
 - Inline SVG graphics
 - Sharp rendering on every screen size
 
-<!-- Replace with actual screenshot -->
-![SVG Doodles](https://via.placeholder.com/800x400?text=Heart+%26+Circle+SVG+Doodles+Screenshot)
+![SVG Doodles](assets/svg_doodles.png)
 
 ---
 
@@ -111,8 +107,7 @@ Each player has a Bitmoji-style SVG avatar.
 
 Presence updates happen instantly through Firebase.
 
-<!-- Replace with actual screenshot -->
-![Online Status](https://via.placeholder.com/800x400?text=Bitmoji+Avatars+Online+Offline+Screenshot)
+![Online Status](assets/online_status.png)
 
 ---
 
@@ -126,8 +121,7 @@ Keeps track of:
 
 Scores persist across every rematch until the room is destroyed.
 
-<!-- Replace with actual screenshot -->
-![Scoreboard](https://via.placeholder.com/800x400?text=Scoreboard+Screenshot)
+![Scoreboard](assets/scoreboard.png)
 
 ---
 
@@ -141,8 +135,7 @@ After every match:
 - New round starts only after both players agree
 - First-player chooser appears again
 
-<!-- Replace with actual screenshot -->
-![Rematch Flow](https://via.placeholder.com/800x400?text=Rematch+Request+Flow+Screenshot)
+![Rematch Request](assets/rematch_request.png) ![Rematch Accept](assets/rematch_accept.png)
 
 ---
 
@@ -155,8 +148,7 @@ A floating chat widget allows players to:
 - View unread message badge
 - Keep chat history throughout the room session
 
-<!-- Replace with actual screenshot -->
-![Chat Widget](https://via.placeholder.com/800x400?text=Chat+Widget+Screenshot)
+![Chat Widget](assets/chat_widget.png)
 
 ---
 
